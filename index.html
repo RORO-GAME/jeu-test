@@ -1,0 +1,2483 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boosters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fond: #080d13;
+  --panneau: rgba(255, 255, 255, .04);
+  --trait: rgba(255, 255, 255, .09);
+  --texte: #e9eef4;
+  --doux: #8c9db0;
+  /* une couleur par rareté : commune, rare, super rare, ultra rare, légendaire, secrète */
+  --rc0: #93ab9d;
+  --rc1: #4c9bff;
+  --rc2: #c35cff;
+  --rc3: #ff4458;
+  --rc4: #f2c14e;
+  --rc5: #dfe6f0;
+}
+/* --rb : à quel point le cadre arc-en-ciel est coloré ; --rf : à quel point le reflet arc-en-ciel est fort.
+   Plus la carte est rare, plus l'effet est marqué. */
+[data-r="0"] { --c: #93ab9d; --c-clair: #cadad1; --c-fonce: #5d7469; --rb: .3;  --rf: .12; }
+[data-r="1"] { --c: #4c9bff; --c-clair: #a9d1ff; --c-fonce: #2a62c4; --rb: .45; --rf: .18; }
+[data-r="2"] { --c: #c35cff; --c-clair: #ff86dc; --c-fonce: #7a46f0; --rb: .6;  --rf: .25; }
+[data-r="3"] { --c: #ff4458; --c-clair: #ff9c9c; --c-fonce: #c4122a; --rb: .75; --rf: .33; }
+[data-r="4"] { --c: #f2c14e; --c-clair: #fff1ae; --c-fonce: #a8741d; --rb: .9;  --rf: .42;
+  --bord: linear-gradient(150deg, #fff3b8, #e2ad45 30%, #a8741d 52%, #f1cf6a 78%, #fff0a8); }
+[data-r="5"] { --c: #dfe6f0; --c-clair: #ffffff; --c-fonce: #8fa0b5; --rb: 1;   --rf: .5;
+  --bord: linear-gradient(150deg, #ffffff, #bcc8d8 26%, #f4f8ff 48%, #9eb0c6 72%, #f6faff); }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--fond); }
+body {
+  margin: 0; min-height: 100vh; color: var(--texte);
+  font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px; line-height: 1.5;
+  background:
+    radial-gradient(1000px 520px at 12% -12%, rgba(76, 155, 255, .11), transparent 70%),
+    radial-gradient(900px 480px at 92% -8%, rgba(195, 92, 255, .09), transparent 70%),
+    var(--fond);
+  background-attachment: fixed;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--texte); outline-offset: 3px; }
+.page { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; padding: 0 16px 56px; }
+
+/* ---------- en-tête ---------- */
+.haut { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; padding: 20px 0 14px; }
+.marque { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 800; letter-spacing: -0.035em; }
+.marque svg { width: 26px; height: 26px; color: #fff; }
+.puces { display: flex; gap: 8px; flex-wrap: wrap; }
+.puce { display: flex; align-items: baseline; gap: 6px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--trait); background: var(--panneau); font-size: 13px; color: var(--doux); }
+.puce b { font-size: 16px; color: var(--texte); font-variant-numeric: tabular-nums; }
+.puce.pieces b::before { content: ""; display: inline-block; width: .6em; height: .6em; margin-right: .4em; border-radius: 50%; background: var(--rc4); box-shadow: inset 0 0 0 .12em rgba(0, 0, 0, .25); }
+
+/* ---------- onglets ---------- */
+.onglets { display: flex; gap: 4px; width: fit-content; max-width: 100%; margin: 4px auto 8px; padding: 4px; border-radius: 14px; border: 1px solid var(--trait); background: var(--panneau); }
+.onglets button { padding: 9px 20px; border: 0; border-radius: 10px; background: none; color: var(--doux); cursor: pointer; font-weight: 600; white-space: nowrap; }
+.onglets button:hover:not(:disabled) { color: var(--texte); }
+.onglets button[aria-selected="true"] { background: rgba(255, 255, 255, .11); color: #fff; }
+.onglets button:disabled { opacity: .45; cursor: default; }
+.onglets .n { margin-left: 6px; font-size: 13px; color: var(--doux); font-variant-numeric: tabular-nums; }
+
+/* ---------- boutons ---------- */
+.btn { padding: 12px 22px; border: 0; border-radius: 12px; background: #fff; color: var(--fond); font-weight: 700; cursor: pointer; transition: transform .15s ease, background .15s ease; }
+.btn:hover { background: #dfe7ef; }
+.btn:active { transform: scale(.97); }
+.btn.second { background: none; color: var(--doux); border: 1px solid var(--trait); font-weight: 600; }
+.btn.second:hover { color: var(--texte); background: var(--panneau); }
+.btn.discret { background: none; color: var(--doux); padding: 0; font-weight: 500; text-decoration: underline; border-radius: 0; }
+.btn.discret:hover { background: none; color: var(--texte); }
+
+/* ---------- scène ---------- */
+.scene { position: relative; isolation: isolate; display: grid; place-items: center; min-height: clamp(470px, 118vw, 580px); padding: 24px 0 8px; }
+.scene::before {
+  content: ""; position: absolute; z-index: -1; inset: 4% 8%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--amb, #3d5b78) 26%, transparent), transparent);
+  transition: background .5s;
+}
+.message { min-height: 3em; margin: 10px auto 0; max-width: 56ch; text-align: center; color: var(--doux); }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; min-height: 48px; margin-top: 8px; }
+.garantie { max-width: 480px; margin: 22px auto 0; padding: 14px 18px; border-radius: 16px; border: 1px solid var(--trait); background: var(--panneau); font-size: 14px; color: var(--doux); }
+.garantie b { color: var(--texte); font-weight: 600; }
+.jauge { height: 5px; margin-top: 10px; border-radius: 3px; background: rgba(255, 255, 255, .09); overflow: hidden; }
+.jauge span { display: block; height: 100%; width: 0; border-radius: 3px; background: #fff; transition: width .5s ease; }
+
+/* ---------- le booster fermé ---------- */
+.pack {
+  position: relative; width: clamp(180px, 44vw, 232px); aspect-ratio: 5 / 7; border: 0; border-radius: 14px; cursor: pointer; color: #fff; overflow: hidden;
+  background: linear-gradient(160deg, #3b5a76, #1c3043 55%, #26405a);
+  box-shadow: 0 30px 50px -24px rgba(0, 0, 0, .9), inset 0 0 0 1px rgba(255, 255, 255, .16);
+  transition: transform .25s ease;
+}
+.pack:hover:not(:disabled) { transform: translateY(-6px) rotate(-1.2deg); }
+.pack:disabled:not(.ouvre) { cursor: default; filter: saturate(.4) brightness(.85); }
+.pack::before, .pack::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 18px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .26) 0 3px, rgba(0, 0, 0, .26) 3px 6px);
+}
+.pack::before { top: 0; }
+.pack::after { bottom: 0; }
+.pack-reflet { position: absolute; inset: 0; mix-blend-mode: soft-light; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .9) 48%, transparent 66%); background-size: 260% 100%; background-position: 130% 0; animation: brille 6s ease-in-out infinite; }
+.pack-centre { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 6px; }
+.pack .logo { position: static; width: 44px; height: 44px; color: #fff; opacity: .9; }
+.pack-titre { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-style: italic; font-weight: 900; font-size: clamp(34px, 8vw, 44px); line-height: 1; text-transform: uppercase; text-shadow: 0 2px 12px rgba(0, 0, 0, .4); }
+.pack-nb { font-size: 14px; opacity: .85; }
+.pack-points { position: absolute; left: 0; right: 0; bottom: 32px; display: flex; justify-content: center; gap: 7px; }
+.pack-points span { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1px rgba(255, 255, 255, .6); }
+.pack.ouvre { animation: secoue .95s ease-in forwards; pointer-events: none; }
+@keyframes secoue {
+  0%   { transform: rotate(0); }
+  12%  { transform: rotate(-4deg) translateX(-4px); }
+  24%  { transform: rotate(4deg) translateX(4px); }
+  36%  { transform: rotate(-5deg) translateX(-3px); }
+  48%  { transform: rotate(5deg) scale(1.03); }
+  62%  { transform: scale(1.1); filter: brightness(1.3); }
+  100% { transform: scale(1.55); opacity: 0; filter: brightness(2.6); }
+}
+
+/* ---------- révélation carte par carte ---------- */
+.stage { display: grid; justify-items: center; gap: 22px; }
+.pile { position: relative; width: clamp(210px, 62vw, 286px); aspect-ratio: 5 / 7; }
+.fond { position: absolute; inset: 0; border-radius: 7% / 5%; background: linear-gradient(150deg, #4a647d, #223446); box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 10px 20px -8px rgba(0, 0, 0, .6); transition: opacity .3s; }
+.fond.f1 { transform: translate(10px, 8px) rotate(2.5deg); }
+.fond.f2 { transform: translate(-9px, 14px) rotate(-3deg); }
+.fond.f3 { transform: translate(14px, 20px) rotate(5deg); }
+.pile[data-reste="0"] .fond { opacity: 0; }
+.pile[data-reste="1"] .f2, .pile[data-reste="1"] .f3, .pile[data-reste="2"] .f3 { opacity: 0; }
+.courante { position: absolute; inset: 0; }
+.courante .carte { width: 100%; height: 100%; }
+.carte.entre { animation: entre .45s cubic-bezier(.2, .8, .2, 1) both; }
+.carte.sort { animation: sort .3s ease-in both; pointer-events: none; }
+@keyframes entre { from { opacity: 0; transform: translateX(50px) rotate(4deg) scale(.96); } }
+@keyframes sort { to { opacity: 0; transform: translateX(-80px) rotate(-7deg); } }
+.progression { display: flex; gap: 9px; }
+.point { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .18); transition: background .3s, box-shadow .3s; }
+.point.vu { background: var(--c); }
+.point.actuel { box-shadow: 0 0 0 2px var(--fond), 0 0 0 3.5px rgba(255, 255, 255, .75); }
+
+.rangee { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px 12px; width: 100%; }
+.rangee .carte-fixe { width: clamp(132px, 41vw, 176px); }
+.rangee.distribue .carte-fixe { animation: donne .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: var(--delai); }
+@keyframes donne { from { opacity: 0; transform: translateY(60px) scale(.92) rotate(-4deg); } }
+
+/* ---------- les cartes : conteneurs, retournement, inclinaison ---------- */
+.carte { position: relative; width: clamp(132px, 41vw, 176px); aspect-ratio: 5 / 7; padding: 0; border: 0; background: none; cursor: pointer; perspective: 900px; }
+.carte.retournee { cursor: default; }
+.carte::before {  /* halo derrière les belles cartes */
+  content: ""; position: absolute; inset: 5% 3%; border-radius: 12%; z-index: -1;
+  background: var(--c); filter: blur(24px); opacity: 0; transition: opacity .5s .3s;
+}
+.carte.eclat::before { opacity: .5; }
+.carte-fixe { position: relative; display: block; aspect-ratio: 5 / 7; padding: 0; border: 0; background: none; perspective: 900px; }
+button.carte-fixe { cursor: pointer; }
+.tilt { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .4s ease-out; }
+.survol .tilt { transition: transform .06s linear; }
+.flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3, .7, .2, 1); }
+.carte.retournee .flip { transform: rotateY(180deg); }
+
+/* ---------- le dessin d'une carte (tout est en cqw : ça suit la largeur de la carte) ---------- */
+.face { position: absolute; inset: 0; container-type: inline-size; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-style: italic; font-weight: 800; }
+.recto { transform: rotateY(180deg); }
+.carte-fixe .recto { transform: none; }
+
+.ext {  /* le cadre coloré */
+  position: absolute; inset: 0; padding: 3.4cqw; border-radius: 7cqw;
+  background: var(--bord, linear-gradient(150deg, var(--c-clair), var(--c-fonce) 52%, var(--c)));
+  box-shadow: 0 1.5cqw 5cqw rgba(0, 0, 0, .55);
+}
+.int { position: relative; width: 100%; height: 100%; border-radius: 4.2cqw; overflow: hidden; background: #0a0f16; isolation: isolate; }
+.art { position: absolute; inset: 0; }
+.art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.art.sans-image {
+  display: grid; place-items: center;
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--c) 16%, transparent) 0 2cqw, transparent 2cqw 6cqw),
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--c) 40%, #0d141c), #0a0f15 72%);
+}
+.grand { font-size: 52cqw; line-height: 1; color: var(--c-clair); opacity: .45; margin-top: -10cqw; }
+.ombre { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(4, 7, 12, .6), rgba(4, 7, 12, 0) 24%, rgba(4, 7, 12, 0) 50%, rgba(4, 7, 12, .9)); }
+
+.code { position: absolute; top: 5cqw; left: 5cqw; min-width: 15cqw; padding: .1em .5em; border-radius: 3cqw; text-align: center;
+  background: linear-gradient(150deg, var(--c-clair), var(--c)); color: #10131c; font-size: 10cqw; line-height: 1.25; }
+.tag { position: absolute; top: 6.4cqw; left: 50%; transform: translateX(-50%); max-width: 46cqw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: .3em .9em; border-radius: 999px; background: rgba(0, 0, 0, .5); color: rgba(255, 255, 255, .8); font-size: 6.2cqw; letter-spacing: .05em; text-transform: uppercase; }
+.num { position: absolute; top: 6.4cqw; right: 5.5cqw; font-size: 8.5cqw; color: rgba(255, 255, 255, .92); text-shadow: 0 1px 6px rgba(0, 0, 0, .6); }
+.bas { position: absolute; left: 6cqw; right: 20cqw; bottom: 11.5cqw; display: flex; flex-direction: column; gap: 1cqw; }
+.fin { font-size: 6.2cqw; letter-spacing: .07em; text-transform: uppercase; color: rgba(255, 255, 255, .88); }
+.nom { font-size: 15cqw; line-height: .98; text-transform: uppercase; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, .55); overflow-wrap: anywhere; }
+.trait { position: absolute; left: 6cqw; bottom: 7cqw; width: 68cqw; height: 1.1cqw; border-radius: 1cqw; background: linear-gradient(90deg, var(--c), transparent); }
+.logo { position: absolute; right: 6cqw; bottom: 5.5cqw; width: 11cqw; height: 11cqw; color: rgba(255, 255, 255, .78); }
+
+/* le dos des cartes : un rectangle simple, à rayures */
+.verso .ext { background: linear-gradient(150deg, #5f7b95, #2c4359 52%, #4d6882); }
+.verso .int { display: grid; place-items: center; background: repeating-linear-gradient(45deg, #121e2b 0 2.6cqw, #182938 2.6cqw 5.2cqw); }
+.verso .int::before { content: ""; position: absolute; inset: 6cqw; border: .7cqw solid rgba(255, 255, 255, .2); border-radius: 2.5cqw; }
+.verso .logo { position: static; width: 26cqw; height: 26cqw; color: rgba(255, 255, 255, .55); }
+
+/* effets : la lumière suit le doigt ou la souris */
+.foil, .glare { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.foil {
+  mix-blend-mode: color-dodge;
+  background: linear-gradient(115deg, #ff7ad9, #ffe36b 18%, #8ef0a3 34%, #6fd0ff 50%, #a58bff 66%, #ff7ad9 84%, #ffe36b);
+  background-size: 250% 250%;
+}
+.glare { mix-blend-mode: overlay; background: radial-gradient(circle at var(--mx, 30%) var(--my, 22%), rgba(255, 255, 255, .6), transparent 46%); }
+[data-r="4"] .glare { opacity: .8; }
+[data-r="5"] .foil { opacity: .14; }
+[data-r="5"] .glare { opacity: 1; }
+
+/* brillante : un simple reflet blanc qui balaie la carte, sans aucune couleur */
+[data-f="brillante"] .foil {
+  opacity: 1; mix-blend-mode: screen;
+  background:
+    linear-gradient(115deg, transparent 34%, rgba(255, 255, 255, .62) 46%, rgba(255, 255, 255, .2) 56%, transparent 66%),
+    linear-gradient(135deg, rgba(255, 255, 255, .22), transparent 42%);
+  background-size: 300% 100%, 100% 100%;
+  animation: balayage 5s ease-in-out infinite;
+}
+[data-f="brillante"] .glare { mix-blend-mode: screen; opacity: .5; }
+
+/* arc-en-ciel : cadre et reflets multicolores, de plus en plus marqués avec la rareté */
+[data-f="arc"] .ext::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: var(--rb);
+  background: linear-gradient(135deg, #ffe36b, #8ef0a3 22%, #6fd0ff 42%, #a58bff 62%, #ff7ad9 82%, #ff9a5c);
+}
+[data-f="arc"] .foil { opacity: var(--rf); animation: derive 7s linear infinite alternate; }
+[data-f="arc"] .glare { opacity: calc(.4 + var(--rb) * .5); }
+.survol [data-f] .foil { animation: none; background-position: var(--mx, 40%) var(--my, 30%); }
+
+[data-f="brillante"] .int::after, [data-f="arc"] .int::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: overlay; opacity: .4;
+  background: radial-gradient(circle, rgba(255, 255, 255, .9) 0 .7px, transparent 1.3px) 0 0 / 6cqw 6cqw;
+  animation: scintille 3s ease-in-out infinite;
+}
+[data-f="brillante"] .int::after { background-size: 10cqw 10cqw; opacity: .5; }
+[data-f="arc"] .int::after { opacity: calc(.15 + var(--rb) * .3); }
+@keyframes scintille { 50% { opacity: .12; } }
+@keyframes derive { from { background-position: 0% 20%; } to { background-position: 100% 80%; } }
+@keyframes balayage { from { background-position: 120% 0; } to { background-position: -20% 0; } }
+
+.reflet { position: absolute; inset: 0; border-radius: 7cqw; pointer-events: none; mix-blend-mode: soft-light;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .95) 48%, transparent 66%); background-size: 260% 100%; background-position: 130% 0; animation: brille 5s ease-in-out infinite; }
+@keyframes brille { to { background-position: -30% 0; } }
+
+.badge { position: absolute; top: -6.5cqw; left: 50%; transform: translateX(-50%); padding: .2em .8em; border-radius: 999px; white-space: nowrap;
+  background: var(--texte); color: var(--fond); font-size: 7.4cqw; font-style: normal; font-weight: 700; box-shadow: 0 .5cqw 2cqw rgba(0, 0, 0, .5); }
+.badge.nb { left: auto; right: 4cqw; transform: none; }
+.badge.gain { top: auto; bottom: -6.5cqw; background: var(--rc4); color: #1d1503; }
+
+.manquante .ext { background: #1d2b39; box-shadow: none; }
+.manquante .ext::before { display: none; }
+.manquante .int { background: #0a1118; }
+.manquante .art { opacity: .5; }
+.manquante .ombre, .manquante .foil, .manquante .glare, .manquante .reflet { display: none; }
+.manquante .code { background: #243545; color: #587087; }
+.manquante .nom { color: #587087; text-shadow: none; }
+.manquante .num, .manquante .logo { color: #3d5266; text-shadow: none; }
+.manquante .trait { background: linear-gradient(90deg, #2a3f52, transparent); }
+
+#flash { position: fixed; inset: 0; z-index: 10; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--fc, #fff) 55%, transparent), transparent 62%); }
+#flash.on { animation: eclair .8s ease-out; }
+@keyframes eclair { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ================= LA CARTE SECRÈTE : platine holographique ================= */
+@property --ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes tourne { to { --ang: 360deg; } }
+@keyframes tourne-rot { to { transform: rotate(360deg); } }
+@keyframes respire { 50% { opacity: .35; transform: scale(.97); } }
+@keyframes monte {
+  from { background-position: 0 0, 7cqw 11cqw, 3cqw 5cqw; }
+  to   { background-position: 0 -23cqw, 7cqw -6cqw, 3cqw -4cqw; }
+}
+@keyframes lueur-texte { to { background-position: -250% 0; } }
+
+/* le cadre : un anneau de lumière qui tourne */
+.recto[data-r="5"]:not(.manquante) .ext {
+  background: conic-gradient(from var(--ang, 0deg), #ffffff, #9ec5ff 14%, #ffffff 28%, #f0c2ff 42%, #ffffff 56%, #9ef0ff 70%, #ffffff 84%, #c8d4ff);
+  animation: tourne 5s linear infinite;
+  box-shadow: 0 0 4cqw rgba(190, 215, 255, .75), 0 1.5cqw 5cqw rgba(0, 0, 0, .55);
+}
+/* l'aura qui déborde autour de la carte */
+.aura { position: absolute; inset: -6cqw; border-radius: 12cqw; pointer-events: none; opacity: .8;
+  background: conic-gradient(from var(--ang, 0deg), #ffffff, #7aa7ff, #ffffff, #e0a8ff, #ffffff, #7af0ff, #ffffff);
+  filter: blur(5cqw); animation: tourne 4s linear infinite, respire 3s ease-in-out infinite; }
+/* l'illustration suit le mouvement, mais à l'envers : effet de profondeur */
+.recto[data-r="5"]:not(.manquante) .art { transform: translate(calc(var(--px, 0) * -2.2cqw), calc(var(--py, 0) * -2.2cqw)) scale(1.1); transition: transform .12s linear; }
+.recto[data-r="5"]:not(.manquante) .foil { opacity: .16; animation: derive 6s linear infinite alternate; }
+.recto[data-r="5"]:not(.manquante) .glare { opacity: 1; }
+/* des rayons de lumière qui tournent lentement derrière tout */
+.s-rayons { position: absolute; inset: -90%; pointer-events: none; mix-blend-mode: overlay; opacity: .6;
+  background: repeating-conic-gradient(from 0deg, transparent 0 8deg, rgba(255, 255, 255, .75) 11deg, transparent 15deg 22deg);
+  animation: tourne-rot 26s linear infinite; }
+/* des étincelles qui montent doucement et scintillent */
+.s-etoiles { position: absolute; inset: -6%; pointer-events: none; mix-blend-mode: screen;
+  background:
+    radial-gradient(circle, #fff 0 .6cqw, transparent 1.5cqw) 0 0 / 19cqw 23cqw,
+    radial-gradient(circle, #cfe4ff 0 .45cqw, transparent 1.1cqw) 7cqw 11cqw / 13cqw 17cqw,
+    radial-gradient(circle, #fff 0 .3cqw, transparent .8cqw) 3cqw 5cqw / 8cqw 9cqw;
+  transform: translate(calc(var(--px, 0) * 2cqw), calc(var(--py, 0) * 2cqw));
+  animation: monte 7s linear infinite, scintille 2.4s ease-in-out infinite; }
+.recto[data-r="5"]:not(.manquante) .nom { color: transparent; text-shadow: none; filter: drop-shadow(0 .5cqw 1.6cqw rgba(0, 0, 0, .7));
+  background: linear-gradient(100deg, #fff 20%, #aee3ff 36%, #fff 48%, #f0c8ff 60%, #fff 78%) 0 0 / 250% 100%;
+  -webkit-background-clip: text; background-clip: text; animation: lueur-texte 3.2s linear infinite; }
+/* les noms gagnent en éclat avec la rareté (la commune reste simple, la secrète a son propre style) */
+@keyframes nom-pulse { 0%, 100% { filter: drop-shadow(0 0 .8cqw var(--halo)) drop-shadow(0 .4cqw .8cqw rgba(0, 0, 0, .6)); } 50% { filter: drop-shadow(0 0 1.6cqw var(--halo)) drop-shadow(0 .4cqw .8cqw rgba(0, 0, 0, .6)); } }
+.recto[data-r="1"]:not(.manquante) .nom { color: #e6f1ff; letter-spacing: .02em; text-shadow: 0 0 2.4cqw rgba(110, 170, 255, .9), 0 .4cqw .8cqw rgba(0, 0, 0, .6); }
+.recto[data-r="2"]:not(.manquante) .nom, .recto[data-r="3"]:not(.manquante) .nom, .recto[data-r="4"]:not(.manquante) .nom {
+  color: transparent; text-shadow: none; letter-spacing: .03em; background-size: 260% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  animation: lueur-texte var(--vit) linear infinite, nom-pulse var(--puls) ease-in-out infinite; }
+.recto[data-r="2"]:not(.manquante) .nom { --halo: rgba(222, 110, 255, .85); --vit: 10s; --puls: 6s;
+  background-image: linear-gradient(100deg, #ffd8f6 0%, #ff8de1 22%, #c9a2ff 45%, #ffd8f6 62%, #ff8de1 82%, #ffd8f6 100%); }
+.recto[data-r="3"]:not(.manquante) .nom { --halo: rgba(255, 70, 70, .95); --vit: 10s; --puls: 6s; -webkit-text-stroke: .15cqw rgba(90, 0, 10, .55);
+  background-image: linear-gradient(100deg, #fff1c9 0%, #ffb15c 18%, #ff4b4b 38%, #fff1c9 55%, #ff7a3d 75%, #ff4b4b 90%, #fff1c9 100%); }
+.recto[data-r="4"]:not(.manquante) .nom { --halo: rgba(255, 205, 80, 1); --vit: 9s; --puls: 5s; -webkit-text-stroke: .2cqw rgba(100, 55, 0, .6); letter-spacing: .04em;
+  background-image: linear-gradient(100deg, #fff6c4 0%, #ffd34e 16%, #c98a14 32%, #fff6c4 48%, #ffe27a 66%, #d9971c 82%, #fff6c4 100%); }
+.recto[data-r="5"]:not(.manquante) .code { box-shadow: 0 0 3cqw rgba(255, 255, 255, .85); }
+.recto[data-r="5"]:not(.manquante) .trait { background: linear-gradient(90deg, #fff, rgba(255, 255, 255, 0)); box-shadow: 0 0 2cqw rgba(255, 255, 255, .8); }
+.recto[data-r="5"][data-f="arc"]:not(.manquante) .foil { opacity: .85; }
+
+/* le suspense : avant d'être retournée, la carte secrète tremble et luit */
+#courante.presage { animation: tremble .22s linear infinite; }
+#courante.presage::before { content: ""; position: absolute; inset: -18%; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, .6), rgba(150, 190, 255, .25) 45%, transparent 68%); animation: respire 1.1s ease-in-out infinite; }
+#courante.presage .verso .ext { background: conic-gradient(from var(--ang, 0deg), #fff, #7aa7ff, #fff, #e0a8ff, #fff, #7af0ff, #fff); animation: tourne 1.6s linear infinite; box-shadow: 0 0 6cqw rgba(200, 225, 255, .9); }
+@keyframes tremble { 0%, 100% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(-1.5px, 1px) rotate(-.5deg); } 50% { transform: translate(1.5px, -1px) rotate(.5deg); } 75% { transform: translate(-1px, -1.5px) rotate(-.3deg); } }
+
+/* la révélation : lumière, ondes, étincelles, bannière */
+#secret-fx { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .7s; overflow: hidden; }
+#secret-fx.on { opacity: 1; }
+.fx-fond { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 46%, rgba(120, 160, 255, .22), rgba(2, 4, 10, .82) 72%); }
+.fx-rayons { position: absolute; left: 50%; top: 46%; width: 190vmax; height: 190vmax; margin: -95vmax 0 0 -95vmax;
+  background: repeating-conic-gradient(from 0deg, transparent 0 7deg, rgba(215, 232, 255, .28) 9.5deg, transparent 12deg 18deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 0, rgba(0, 0, 0, .55) 16%, transparent 52%);
+  mask-image: radial-gradient(circle closest-side, #000 0, rgba(0, 0, 0, .55) 16%, transparent 52%);
+  animation: tourne-rot 48s linear infinite; }
+.fx-onde { position: absolute; left: 50%; top: 46%; width: 20vmin; height: 20vmin; margin: -10vmin 0 0 -10vmin; border-radius: 50%; border: .6vmin solid rgba(255, 255, 255, .85); opacity: 0; }
+#secret-fx.on .fx-onde { animation: onde 1.8s ease-out both; }
+#secret-fx.on .fx-onde:nth-child(4) { animation-delay: .22s; }
+#secret-fx.on .fx-onde:nth-child(5) { animation-delay: .44s; }
+@keyframes onde { 0% { transform: scale(.2); opacity: .9; } 100% { transform: scale(8); opacity: 0; } }
+.fx-etincelles span { position: absolute; left: 50%; top: 46%; width: 1.1vmin; height: 1.1vmin; border-radius: 50%; background: #fff; opacity: 0;
+  box-shadow: 0 0 1.6vmin .4vmin rgba(190, 220, 255, .95); }
+#secret-fx.on .fx-etincelles span { animation: jaillit var(--t, 1.5s) cubic-bezier(.1, .7, .3, 1) both; }
+@keyframes jaillit {
+  0% { opacity: 1; transform: translate(-50%, -50%) rotate(var(--a)) translateX(0) scale(var(--z)); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--a)) translateX(var(--d)) scale(0); }
+}
+#secret-banniere { position: fixed; top: 12%; left: 0; right: 0; z-index: 2; pointer-events: none; text-align: center; opacity: 0;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-style: italic; font-weight: 900; text-transform: uppercase;
+  font-size: clamp(36px, 9vw, 78px); line-height: 1; letter-spacing: .18em; padding-left: .18em;
+  background: linear-gradient(100deg, #fff 25%, #aee3ff 40%, #fff 50%, #f0c8ff 60%, #fff 75%) 0 0 / 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 14px rgba(160, 200, 255, .9)); }
+#secret-banniere.on { animation: banniere 3.6s ease-out forwards, lueur-texte 3s linear infinite; }
+@keyframes banniere {
+  0% { opacity: 0; letter-spacing: .7em; transform: scale(1.5); }
+  22% { opacity: 1; letter-spacing: .18em; transform: scale(1); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+.scene.secoue { animation: secousse .8s ease-out; }
+@keyframes secousse {
+  0%, 100% { transform: translate(0, 0); } 10% { transform: translate(-8px, 4px); } 22% { transform: translate(7px, -5px); }
+  36% { transform: translate(-5px, 3px); } 52% { transform: translate(4px, -2px); } 70% { transform: translate(-2px, 1px); }
+}
+
+/* ---------- connexion ---------- */
+.ecran { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(6, 10, 15, .94); backdrop-filter: blur(8px); overflow: auto; }
+.connexion { width: min(390px, 100%); display: grid; gap: 14px; }
+.connexion .marque { justify-content: center; font-size: 30px; }
+.connexion .onglets { margin: 0; width: 100%; }
+.connexion .onglets button { flex: 1; }
+.connexion label { display: grid; gap: 6px; font-size: 14px; color: var(--doux); }
+.connexion input { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--trait); background: rgba(255, 255, 255, .06); color: var(--texte); font: inherit; font-size: 16px; }
+.connexion input:focus { outline: 2px solid #fff; outline-offset: 1px; }
+.connexion .aide { margin: 0; font-size: 13px; color: var(--doux); }
+.erreur { margin: 0; min-height: 1.4em; font-size: 14px; color: #ff8d9a; }
+.btn:disabled { opacity: .5; cursor: default; }
+/* classement et profils */
+.classement { max-width: 640px; margin: 0 auto; }
+.groupe-titre { grid-column: 1 / -1; margin: 18px 0 2px; padding-bottom: 6px; border-bottom: 1px solid var(--trait); font-size: 16px; color: var(--doux); }
+.groupe-titre:first-child { margin-top: 4px; }
+.coll-outils { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 4px; }
+.tri { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--doux); font-size: 14px; }
+.tri select { flex: 0 1 240px; padding: 9px 12px; }
+.rang-liste { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+.rang-ligne { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; border: 1px solid var(--trait); border-radius: 14px; background: var(--panneau); color: var(--texte); font: inherit; text-align: left; cursor: pointer; }
+.rang-ligne:hover { border-color: rgba(255, 255, 255, .35); }
+.rang-ligne.moi { border-color: rgba(242, 193, 78, .6); }
+.rang-num { flex: none; width: 2.2em; font-weight: 800; font-size: 18px; text-align: center; font-variant-numeric: tabular-nums; color: var(--doux); }
+.rang-ligne:nth-child(1) .rang-num { color: #ffd34e; } .rang-ligne:nth-child(2) .rang-num { color: #d5dde6; } .rang-ligne:nth-child(3) .rang-num { color: #d9915c; }
+.rang-nom { flex: 1; min-width: 0; font-weight: 700; text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; }
+.rang-det { color: var(--doux); font-size: 13px; }
+.rang-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+.profil-tete { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 6px 0 14px; }
+.profil-tete h2 { margin: 0; text-transform: capitalize; }
+.profil-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 0 0 18px; }
+.profil-stats div { padding: 12px 14px; border: 1px solid var(--trait); border-radius: 12px; background: var(--panneau); }
+.profil-stats b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.profil-stats span { font-size: 13px; color: var(--doux); }
+.vitrine { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(8px, 2vw, 18px); max-width: 640px; margin: 10px 0 8px; }
+.vitrine .vide-case { aspect-ratio: 5 / 7; border: 2px dashed var(--trait); border-radius: 14px; display: grid; place-items: center; color: var(--doux); font-size: 13px; text-align: center; padding: 6px; }
+.vit-choix { margin-top: 14px; }
+.vit-choix .grille-choix { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin: 12px 0; }
+.vit-choix button.carte-fixe { padding: 0; border: 3px solid transparent; border-radius: 12px; background: none; cursor: pointer; }
+.vit-choix button.carte-fixe[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, .25); }
+
+.puce.compte b { text-transform: capitalize; }
+.pied-actions { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.btn.ur { background: #ff4458; color: #fff; }
+.btn.ur:hover { background: #ff6c7c; }
+.statut-ok { color: #8fd9a8; }
+
+/* ---------- réserve de boosters ---------- */
+.stock-ligne { display: flex; justify-content: space-between; gap: 12px; }
+.stock-ligne b { font-variant-numeric: tabular-nums; }
+.stock-note { margin: 8px 0 0; font-size: 13.5px; }
+.pack.ur { background: linear-gradient(160deg, #8a2233, #451019 55%, #6b1b29); }
+
+/* ---------- boutique ---------- */
+.boutique { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); padding-top: 18px; }
+.article { display: flex; flex-direction: column; gap: 14px; }
+.article-haut { display: flex; gap: 16px; align-items: center; }
+.article h3 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+.article p { margin: 4px 0 0; color: var(--doux); font-size: 14.5px; }
+.mini { position: relative; flex: none; width: 58px; aspect-ratio: 5 / 7; border-radius: 8px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(160deg, #3b5a76, #1c3043 55%, #26405a); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18), 0 10px 18px -8px rgba(0, 0, 0, .8);
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-style: italic; font-weight: 900; font-size: 22px; }
+.mini.x10 { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18), 5px -4px 0 -1px #2b4560, 10px -8px 0 -2px #223a50, 0 10px 18px -8px rgba(0, 0, 0, .8); }
+.mini.ur { background: linear-gradient(160deg, #8a2233, #451019 55%, #6b1b29); }
+.prix { display: flex; align-items: baseline; gap: 6px; font-size: 14px; color: var(--doux); }
+.prix b { font-size: 24px; color: var(--texte); font-variant-numeric: tabular-nums; }
+.solde { color: var(--doux); font-size: 15px; margin: 4px 0 0; }
+.solde b { color: var(--texte); }
+
+/* ---------- roue, codes, admin ---------- */
+.puce.multi { border-color: rgba(242, 193, 78, .55); }
+.puce.multi b { color: var(--rc4); }
+.roue { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 26px 44px; padding: 26px 22px; margin-top: 18px; }
+.roue-support { position: relative; flex: none; width: clamp(230px, 70vw, 300px); aspect-ratio: 1; margin-top: 10px; }
+.roue-pointe { position: absolute; top: -14px; left: 50%; z-index: 2; width: 0; height: 0; margin-left: -13px;
+  border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 28px solid #fff; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .7)); }
+#roue { display: block; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 5px rgba(255, 255, 255, .14), 0 22px 40px -18px rgba(0, 0, 0, .9);
+  transition: transform 5.4s cubic-bezier(.1, .72, .12, 1); }
+#roue text { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 800; letter-spacing: -0.01em; }
+.roue-texte { flex: 1 1 260px; max-width: 400px; }
+.roue-texte h3 { margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
+.roue-texte p { margin: 0 0 14px; color: var(--doux); font-size: 14.5px; }
+.roue-texte .roue-resultat { min-height: 3em; margin: 14px 0 6px; color: var(--texte); font-size: 16px; font-weight: 600; }
+.roue-texte .roue-resultat .btn { margin-top: 10px; }
+.code-form { margin-top: 16px; }
+.code-form h3, .admin-grille h3 { margin: 0 0 4px; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+.code-form p, .admin-grille p { margin: 0 0 12px; color: var(--doux); font-size: 14.5px; }
+.code-ligne { display: flex; flex-wrap: wrap; gap: 10px; }
+.champ { flex: 1 1 180px; min-width: 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--trait); background: rgba(255, 255, 255, .06); color: var(--texte); font: inherit; font-size: 16px; }
+.champ:focus { outline: 2px solid #fff; outline-offset: 1px; }
+.msg-court { min-height: 1.6em; margin: 10px 0 0 !important; font-size: 14.5px; }
+.msg-court.ko { color: #ff8d9a !important; }
+.msg-court.ok { color: #8fd9a8 !important; }
+.admin-grille { display: grid; gap: 16px; padding-top: 18px; }
+.admin-form { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); align-items: end; }
+.admin-form label { display: grid; gap: 6px; font-size: 14px; color: var(--doux); }
+.case { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; color: var(--texte); font-size: 15px; }
+.case input { width: 18px; height: 18px; accent-color: #fff; }
+.btn.petit { padding: 6px 12px; border-radius: 10px; font-size: 14px; }
+td.act { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 0; }
+.etat-actif { color: #8fd9a8; } .etat-off { color: var(--doux); }
+
+
+/* ---------- collection ---------- */
+.panneau { border: 1px solid var(--trait); background: var(--panneau); border-radius: 18px; padding: 20px; }
+.coll-tete { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; padding: 22px 0 6px; }
+h2 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
+.sous { margin: 4px 0 0; color: var(--doux); font-size: 15px; }
+.jauge.large { height: 6px; margin: 10px 0 0; }
+.filtres { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 0 6px; }
+.filtres button { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--trait); background: none; color: var(--doux); cursor: pointer; font-size: 14px; }
+.filtres button:hover { color: var(--texte); }
+.filtres button[data-r]::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.filtres button[aria-pressed="true"] { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .5); color: #fff; }
+.filtres.statut { padding-bottom: 20px; }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(142px, 1fr)); gap: 22px 14px; }
+.vide { grid-column: 1 / -1; padding: 40px 0; text-align: center; color: var(--doux); }
+
+/* ---------- onglet Infos ---------- */
+.infos { display: grid; gap: 16px; padding-top: 18px; }
+.infos h3 { margin: 0 0 4px; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+.infos p { margin: 0 0 12px; color: var(--doux); font-size: 14.5px; }
+.table-defile { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th { padding: 8px 12px 8px 0; text-align: left; font-weight: 500; font-size: 13px; color: var(--doux); border-bottom: 1px solid var(--trait); white-space: nowrap; }
+td { padding: 10px 12px 10px 0; border-bottom: 1px solid rgba(255, 255, 255, .05); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.rar { font-weight: 600; }
+td.rar::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 10px; border-radius: 50%; background: var(--c); }
+.deux-col { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+/* ---------- carte en grand ---------- */
+dialog#zoom { border: 0; padding: 20px; margin: 0; width: 100vw; height: 100vh; max-width: none; max-height: none; background: transparent; color: var(--texte); }
+dialog#zoom[open] { display: grid; place-items: center; overflow: auto; }
+dialog#zoom::backdrop { background: rgba(4, 7, 11, .86); backdrop-filter: blur(8px); }
+.zoom-contenu { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 28px 44px; width: min(94vw, 760px); }
+.zoom-carte .carte-fixe { width: clamp(220px, 64vw, 330px); }
+.zoom-infos { flex: 1 1 240px; max-width: 320px; }
+.zoom-infos h3 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+.zoom-infos .sous { margin: 6px 0 16px; }
+.zoom-infos p { margin: 0 0 14px; color: var(--doux); font-size: 14.5px; }
+.zoom-fins { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.zoom-fins button { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--trait); background: none; cursor: pointer; font-size: 14px; color: var(--texte); }
+.zoom-fins button[aria-pressed="true"] { background: rgba(255, 255, 255, .13); border-color: rgba(255, 255, 255, .6); }
+.zoom-fins button:disabled { opacity: .4; cursor: default; }
+.zoom-nav { display: flex; gap: 8px; }
+.zoom-fermer { position: fixed; top: 14px; right: 14px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--trait); background: rgba(255, 255, 255, .07); font-size: 22px; line-height: 1; cursor: pointer; }
+.zoom-fermer:hover { background: rgba(255, 255, 255, .16); }
+
+footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--trait); color: var(--doux); font-size: 14px; }
+footer p { margin: 0; }
+
+@media (max-width: 560px) {
+  .onglets { width: 100%; }
+  .onglets button { flex: 1; padding: 9px 4px; font-size: 14px; }
+  .onglets .n { display: none; }
+  .grille { grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 10px 6px; }
+  .coll-cols { display: flex !important; }
+}
+.coll-cols { display: none; align-items: center; gap: 6px; margin-top: 12px; color: var(--doux); font-size: 14px; }
+.coll-cols button { padding: 6px 12px; border: 1px solid var(--trait); border-radius: 999px; background: none; color: var(--doux); font: inherit; cursor: pointer; }
+.coll-cols button[aria-pressed="true"] { background: rgba(255, 255, 255, .14); color: #fff; border-color: rgba(255, 255, 255, .4); }
+@media (prefers-reduced-motion: reduce) {
+  .recto:not(.manquante) .nom { animation: none !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="haut">
+    <div class="marque">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg>
+      Boosters
+    </div>
+    <div class="puces">
+      <div class="puce compte" id="puce-compte" role="button" tabindex="0" title="Mon profil" style="cursor:pointer" hidden><b id="st-pseudo"></b></div>
+      <div class="puce pieces"><b id="st-pieces">0</b> pièces</div>
+      <div class="puce multi" id="puce-multi" hidden><b id="st-multi"></b></div>
+      <div class="puce"><b id="st-dispo">0</b> <span id="st-dispo-lbl">boosters</span></div>
+      <div class="puce"><b id="st-ouverts">0</b> <span id="st-ouverts-lbl">ouverts</span></div>
+    </div>
+  </header>
+
+  <nav class="onglets" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" id="t-boosters" aria-selected="true" aria-controls="v-boosters">Booster</button>
+    <button type="button" role="tab" id="t-collection" aria-selected="false" aria-controls="v-collection" disabled>Collection<span class="n" id="t-compte"></span></button>
+    <button type="button" role="tab" id="t-classement" aria-selected="false" aria-controls="v-classement" disabled>Classement</button>
+    <button type="button" role="tab" id="t-boutique" aria-selected="false" aria-controls="v-boutique" disabled>Boutique</button>
+    <button type="button" role="tab" id="t-infos" aria-selected="false" aria-controls="v-infos" disabled>Infos</button>
+    <button type="button" role="tab" id="t-admin" aria-selected="false" aria-controls="v-admin" hidden>Admin</button>
+  </nav>
+
+  <main>
+    <section id="v-boosters" role="tabpanel" aria-labelledby="t-boosters">
+      <div class="scene" id="scene">
+        <button type="button" class="pack" id="pack" disabled aria-label="Ouvrir un booster">
+          <span class="pack-reflet"></span>
+          <span class="pack-centre">
+            <span id="pack-etoile"></span>
+            <span class="pack-titre" id="pack-titre">Booster</span>
+            <span class="pack-nb" id="pack-nb"></span>
+          </span>
+          <span class="pack-points" id="pack-points" aria-hidden="true"></span>
+        </button>
+        <div class="stage" id="stage" hidden>
+          <div class="pile" id="pile" data-reste="3">
+            <span class="fond f3"></span><span class="fond f2"></span><span class="fond f1"></span>
+            <div class="courante" id="courante"></div>
+          </div>
+          <div class="progression" id="progression" aria-hidden="true"></div>
+        </div>
+        <div class="rangee" id="rangee" hidden></div>
+      </div>
+      <p class="message" id="message" aria-live="polite">Chargement du moteur Python…</p>
+      <div class="actions">
+        <button type="button" class="btn" id="btn-principal" hidden>Retourner la carte</button>
+        <button type="button" class="btn second" id="btn-passer" hidden>Passer l'animation</button>
+        <button type="button" class="btn" id="btn-autre" hidden>Ouvrir un autre booster</button>
+        <button type="button" class="btn ur" id="btn-ur" hidden>Booster ultra rare garanti</button>
+      </div>
+      <div class="garantie" id="reserve">
+        <div class="stock-ligne"><span>Boosters gratuits</span><b id="st-stock">…</b></div>
+        <div class="jauge"><span id="jauge"></span></div>
+        <p class="stock-note" id="st-note"></p>
+      </div>
+    </section>
+
+    <section id="v-collection" role="tabpanel" aria-labelledby="t-collection" hidden>
+      <div class="coll-tete">
+        <div>
+          <h2 id="coll-titre"></h2>
+          <p class="sous" id="coll-finitions"></p>
+        </div>
+      </div>
+      <div class="jauge large"><span id="coll-jauge"></span></div>
+      <div class="filtres" id="filtres" role="group" aria-label="Filtrer par rareté"></div>
+      <div class="filtres statut" id="filtres-statut" role="group" aria-label="Filtrer par état"></div>
+      <div class="coll-outils">
+        <label class="tri">Trier par
+          <select id="coll-tri" class="champ">
+            <option value="rarete-asc">Rareté (commune d'abord)</option>
+            <option value="rarete-desc">Rareté (la plus rare d'abord)</option>
+            <option value="numero">Numéro</option>
+            <option value="nom">Nom (A → Z)</option>
+            <option value="serie">Série</option>
+            <option value="exemplaires">Nombre d'exemplaires</option>
+          </select>
+        </label>
+        <div class="coll-cols" role="group" aria-label="Cartes par ligne">Par ligne
+          <button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5">5</button>
+        </div>
+        <label class="tri">Série
+          <select id="coll-serie" class="champ"><option value="">Toutes</option></select>
+        </label>
+      </div>
+      <div class="grille" id="grille"></div>
+    </section>
+
+    <section id="v-boutique" role="tabpanel" aria-labelledby="t-boutique" hidden>
+      <div class="coll-tete">
+        <div>
+          <h2>Boutique</h2>
+          <p class="solde">Tu as <b id="solde">0</b> pièces. Un booster acheté s'ouvre tout de suite.</p>
+        </div>
+      </div>
+
+      <div class="panneau roue">
+        <div class="roue-support">
+          <span class="roue-pointe" aria-hidden="true"></span>
+          <svg id="roue" viewBox="-100 -100 200 200" aria-hidden="true"></svg>
+        </div>
+        <div class="roue-texte">
+          <h3>Roue de la chance</h3>
+          <p>Un tour par jour, remis à zéro à minuit. Pièces, booster, multiplicateur… ou rien du tout.</p>
+          <button type="button" class="btn" id="roue-btn">Tourner la roue</button>
+          <p class="sous" id="roue-compte" style="margin-top:12px"></p>
+          <div class="roue-resultat" id="roue-resultat" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="boutique" id="boutique"></div>
+      <p class="message" id="boutique-msg" aria-live="polite"></p>
+
+      <form class="panneau code-form" id="form-code">
+        <h3>Un code ?</h3>
+        <p>Entre un code pour gagner une récompense. Chaque code ne marche qu'une fois par joueur.</p>
+        <div class="code-ligne">
+          <input class="champ" id="code-saisie" placeholder="Ton code" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40" aria-label="Code">
+          <button type="submit" class="btn" id="code-valider">Valider</button>
+        </div>
+        <p class="msg-court" id="code-msg" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="v-classement" role="tabpanel" aria-labelledby="t-classement" hidden>
+      <div class="classement">
+        <div id="cl-liste-zone">
+          <h2 style="margin:0">Classement</h2>
+          <p class="sous" id="cl-note">Clique sur un joueur pour voir son profil et sa vitrine.</p>
+          <label class="tri">Trier par
+            <select id="cl-tri" class="champ">
+              <option value="score">Score</option>
+              <option value="chance">Chance aux boosters</option>
+              <option value="boosters">Boosters ouverts</option>
+              <option value="possedees">Cartes différentes</option>
+              <option value="brillantes">Cartes brillantes</option>
+              <option value="arcs">Cartes arc-en-ciel</option>
+            </select>
+          </label>
+          <ol class="rang-liste" id="cl-liste"></ol>
+        </div>
+        <div id="cl-profil" hidden></div>
+      </div>
+    </section>
+
+    <section id="v-admin" role="tabpanel" aria-labelledby="t-admin" hidden>
+      <div class="admin-grille">
+        <div class="panneau">
+          <h3>Ouvrir des boosters librement</h3>
+          <p>Pas besoin d'en avoir : tu en ouvres autant que tu veux.</p>
+          <label class="case"><input type="checkbox" id="admin-test"> Mode test : ne rien enregistrer (ni cartes, ni pièces)</label>
+          <div class="actions" style="justify-content:flex-start;min-height:0;margin:0">
+            <button type="button" class="btn" id="ad-normal">1 booster</button>
+            <button type="button" class="btn ur" id="ad-ur">1 booster ultra rare</button>
+            <button type="button" class="btn second" id="ad-dix">10 boosters</button>
+          </div>
+        </div>
+        <div class="panneau">
+          <h3>Codes de la boutique</h3>
+          <p>Un code donne une récompense, une seule fois par joueur. Écris-le en minuscules, sans espace (lettres, chiffres, - et _).
+            Pour changer un code, enregistre-le à nouveau avec le même nom.</p>
+          <form class="admin-form" id="form-admin-code">
+            <label>Code<input class="champ" id="ac-code" maxlength="40" required autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="bienvenue10"></label>
+            <label>Boosters<input class="champ" id="ac-boosters" type="number" min="0" max="1000" value="1"></label>
+            <label>Boosters ultra rare<input class="champ" id="ac-ur" type="number" min="0" max="1000" value="0"></label>
+            <label>Pièces<input class="champ" id="ac-pieces" type="number" min="0" max="100000" value="0"></label>
+            <button type="submit" class="btn">Enregistrer le code</button>
+          </form>
+          <p class="msg-court" id="ac-msg" aria-live="polite"></p>
+          <div class="table-defile" id="liste-codes"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="v-infos" role="tabpanel" aria-labelledby="t-infos" hidden>
+      <div class="infos" id="infos"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p id="pied-compte"></p>
+    <div class="pied-actions">
+      <button type="button" class="btn discret" id="deconnexion">Se déconnecter</button>
+      <button type="button" class="btn discret" id="reset">Effacer ma collection</button>
+    </div>
+  </footer>
+</div>
+
+<dialog id="zoom" aria-label="Carte en grand">
+  <button type="button" class="zoom-fermer" id="zoom-fermer" aria-label="Fermer">×</button>
+  <div class="zoom-contenu">
+    <div class="zoom-carte" id="zoom-carte"></div>
+    <div class="zoom-infos">
+      <h3 id="zoom-nom"></h3>
+      <p class="sous" id="zoom-details"></p>
+      <div class="zoom-fins" id="zoom-fins" role="group" aria-label="Finition"></div>
+      <p id="zoom-valeur"></p>
+      <div class="zoom-nav">
+        <button type="button" class="btn second" id="zoom-prec">‹ Précédente</button>
+        <button type="button" class="btn second" id="zoom-suiv">Suivante ›</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+<div id="flash"></div>
+
+<div id="secret-fx" aria-hidden="true">
+  <div class="fx-fond"></div>
+  <div class="fx-rayons"></div>
+  <div class="fx-onde"></div><div class="fx-onde"></div><div class="fx-onde"></div>
+  <div class="fx-etincelles" id="fx-etincelles"></div>
+</div>
+<div id="secret-banniere" aria-hidden="true">Carte secrète</div>
+
+<div class="ecran" id="ecran-connexion" hidden>
+  <form class="connexion panneau" id="form-connexion">
+    <div class="marque">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg>
+      Boosters
+    </div>
+    <div class="onglets" role="group" aria-label="Connexion ou inscription">
+      <button type="button" id="c-connecter" aria-pressed="true">Se connecter</button>
+      <button type="button" id="c-inscrire" aria-pressed="false">Créer un compte</button>
+    </div>
+    <label>Pseudo
+      <input id="c-pseudo" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20" required>
+    </label>
+    <label>Mot de passe
+      <input id="c-mdp" name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <p class="aide" id="c-aide"></p>
+    <p class="erreur" id="c-erreur" role="alert"></p>
+    <button type="submit" class="btn" id="c-valider">Se connecter</button>
+    <p class="aide" id="c-mode"></p>
+  </form>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+"use strict";
+
+const CLE_SESSION = "boosters-session-v4";   // qui est connecté sur cet appareil
+const CLE_LOCAL = "boosters-comptes-v4";     // comptes du mode sans serveur
+const CLE_CODES = "boosters-codes-v4";       // codes de la boutique du mode sans serveur
+const CLE_CLASSEMENT = "boosters-classement-v4";  // profils publics du mode sans serveur
+const CLE_CACHE = "boosters-cache-v4-";      // copie de la progression, suivie de l'identifiant du joueur
+const reduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = (s) => document.querySelector(s);
+const attendre = (ms) => new Promise((ok) => setTimeout(ok, ms));
+const pad = (n) => String(n).padStart(3, "0");
+const pluriel = (n, un, plusieurs) => n + " " + (n > 1 ? plusieurs : un);
+const majuscule = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const NOMS_FIN = { "brillante": "Brillante", "arc-en-ciel": "Arc-en-ciel" };
+const FINITIONS = ["normale", "brillante", "arc-en-ciel"];
+const classeFin = (f) => (f === "arc-en-ciel" ? "arc" : f || "normale");
+
+function el(tag, cls, texte) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (texte !== undefined) n.textContent = texte;
+  return n;
+}
+
+let REGL = null;          // réglages venus de moteur.py
+let CARTES = [];          // contenu de cartes.json
+let CARTES_TXT = "";
+let ouvrirPy = null;      // fonction Python ouvrir_booster_web
+let etat = null;          // progression du joueur
+let phase = "chargement"; // chargement | pret | ouverture | reveal | fini
+let tirage = [];
+let idx = 0;              // carte en cours de révélation
+let retournee = false;    // la carte en cours est-elle retournée ?
+let occupe = false;       // une transition est en cours
+let garantieDeclenchee = false;
+let gainRestant = 0;      // pièces des cartes pas encore retournées (elles s'ajoutent au compteur au fil des retournements)
+let file = [];            // boosters à ouvrir à la suite (achat, code, roue, admin) : le mode de chacun
+let fileTotal = 0, fileFait = 0;
+let roueEnCours = false, rotRoue = 0, segmentsRoue = [];
+let adminTest = false, dernierTest = false, codesAdmin = {};
+let triColl = "rarete-asc", serieColl = "";
+let filtre = -1;          // filtre de rareté dans la collection
+let statut = "toutes";    // filtre d'état dans la collection
+
+const rang = (c) => REGL.ordre.indexOf(c.rarete);
+
+/* ---------- stockage du navigateur (avec un plan B si le navigateur le refuse) ---------- */
+const memoire = {};
+function lire(k) { try { return localStorage.getItem(k); } catch (_) { return memoire[k] ?? null; } }
+function ecrire(k, v) { try { localStorage.setItem(k, v); } catch (_) { memoire[k] = v; } }
+function effacer(k) { try { localStorage.removeItem(k); } catch (_) { delete memoire[k]; } }
+function lireJson(k) { try { const t = lire(k); return t ? JSON.parse(t) : null; } catch (_) { return null; } }
+
+/* ---------- comptes : un pseudo et un mot de passe ---------- */
+const DOMAINE = "@booster-jeu.app";   // Firebase veut une adresse mail : on en fabrique une, elle n'est jamais utilisée
+const normaliserPseudo = (p) => p.trim().normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+function verifierPseudo(p) {
+  const n = normaliserPseudo(p);
+  if (n.length < 3 || n.length > 20) return "Le pseudo doit faire entre 3 et 20 caractères.";
+  if (!/^[a-z0-9_.-]+$/.test(n)) return "Le pseudo ne peut contenir que des lettres, des chiffres, _ . et -";
+  return null;
+}
+async function hacher(t) {
+  try {
+    const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+    return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+  } catch (_) {
+    let h = 5381;
+    for (const ch of t) h = ((h << 5) + h + ch.charCodeAt(0)) | 0;
+    return "x" + h;
+  }
+}
+
+/* Mode sans serveur : les comptes restent dans ce navigateur (utile pour tester, ou tant que Firebase n'est pas réglé) */
+function creerLocal() {
+  let courant = "";
+  const comptes = () => lireJson(CLE_LOCAL) || {};
+  const ouvrirSession = (id) => {
+    courant = id;
+    ecrire(CLE_SESSION, JSON.stringify({ mode: "local", pseudo: id }));
+    return { pseudo: id, uid: "local-" + id };
+  };
+  return {
+    nom: "local",
+    async inscrire(pseudo, mdp) {
+      const id = normaliserPseudo(pseudo), c = comptes();
+      if (c[id]) throw new Error("Ce pseudo est déjà pris.");
+      c[id] = { mdp: await hacher(id + ":" + mdp), etat: null };
+      ecrire(CLE_LOCAL, JSON.stringify(c));
+      return ouvrirSession(id);
+    },
+    async connecter(pseudo, mdp) {
+      const id = normaliserPseudo(pseudo), c = comptes();
+      if (!c[id] || c[id].mdp !== (await hacher(id + ":" + mdp))) throw new Error("Pseudo ou mot de passe incorrect.");
+      return ouvrirSession(id);
+    },
+    async reprendre() {
+      const s = lireJson(CLE_SESSION);
+      return s && s.mode === "local" && comptes()[s.pseudo] ? ouvrirSession(s.pseudo) : null;
+    },
+    async charger() { const c = comptes()[courant]; return c && c.etat ? JSON.parse(c.etat) : null; },
+    async sauver(texte) { const c = comptes(); if (c[courant]) { c[courant].etat = texte; ecrire(CLE_LOCAL, JSON.stringify(c)); } },
+    // codes de la boutique (partagés par les comptes de cet appareil)
+    async lireCode(code) { return (lireJson(CLE_CODES) || {})[code] || null; },
+    async listerCodes() { return lireJson(CLE_CODES) || {}; },
+    async sauverCode(code, donnees) { const c = lireJson(CLE_CODES) || {}; c[code] = donnees; ecrire(CLE_CODES, JSON.stringify(c)); },
+    async supprimerCode(code) { const c = lireJson(CLE_CODES) || {}; delete c[code]; ecrire(CLE_CODES, JSON.stringify(c)); },
+    // classement : les profils publics des comptes de cet appareil
+    async publier(texte) { const c = lireJson(CLE_CLASSEMENT) || {}; c[courant] = JSON.parse(texte); ecrire(CLE_CLASSEMENT, JSON.stringify(c)); },
+    async listerClassement() { const c = lireJson(CLE_CLASSEMENT) || {}; return Object.keys(c).map((k) => ({ ...c[k], uid: "local-" + k })); },
+    deconnecter() { effacer(CLE_SESSION); },
+  };
+}
+
+/* Comptes en ligne avec Firebase (gratuit) : on parle directement à leur service, sans bibliothèque */
+function creerFirebase(cfg) {
+  const cle = encodeURIComponent(cfg.apiKey);
+  const racine = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(cfg.projectId)}/databases/(default)/documents`;
+  const base = racine + "/joueurs";
+  let jeton = "", expire = 0, refresh = "", uid = "", pseudo = "";
+
+  const messages = [
+    ["EMAIL_EXISTS", "Ce pseudo est déjà pris."],
+    ["INVALID_LOGIN_CREDENTIALS", "Pseudo ou mot de passe incorrect."],
+    ["EMAIL_NOT_FOUND", "Pseudo ou mot de passe incorrect."],
+    ["INVALID_PASSWORD", "Pseudo ou mot de passe incorrect."],
+    ["INVALID_EMAIL", "Ce pseudo n'est pas valide."],
+    ["WEAK_PASSWORD", "Mot de passe trop court : 6 caractères minimum."],
+    ["TOO_MANY_ATTEMPTS", "Trop d'essais. Attends un peu avant de réessayer."],
+    ["OPERATION_NOT_ALLOWED", "Les comptes ne sont pas activés dans Firebase (voir LISEZMOI.md)."],
+    ["CONFIGURATION_NOT_FOUND", "Les comptes ne sont pas activés dans Firebase (voir LISEZMOI.md)."],
+    ["API key", "La clé Firebase est incorrecte (voir firebase-config.js)."],
+    ["does not exist", "La base de données Firestore n'est pas créée (voir LISEZMOI.md)."],
+    ["PERMISSION_DENIED", "La base de données refuse l'accès : vérifie les règles Firestore (voir LISEZMOI.md)."],
+    ["insufficient permissions", "La base de données refuse l'accès : vérifie les règles Firestore (voir LISEZMOI.md)."],
+  ];
+  const traduire = (code, statut) => {
+    for (const [k, t] of messages) if (String(code).includes(k)) return t;
+    return "Erreur du service de comptes (" + (code || statut) + ").";
+  };
+  async function appel(url, options) {
+    let r;
+    try { r = await fetch(url, options); } catch (_) { throw new Error("Pas de connexion à Internet."); }
+    let j = {};
+    try { j = await r.json(); } catch (_) { /* réponse vide */ }
+    if (!r.ok) {
+      const code = (j.error && (j.error.message || j.error.status)) || "";
+      const e = new Error(traduire(code, r.status));
+      e.statut = r.status;
+      e.code = String(code);
+      throw e;
+    }
+    return j;
+  }
+  const entrerSession = (r, p) => {
+    jeton = r.idToken || r.id_token;
+    refresh = r.refreshToken || r.refresh_token;
+    uid = r.localId || r.user_id;
+    expire = Date.now() + (Number(r.expiresIn || r.expires_in) || 3600) * 1000;
+    pseudo = p;
+    ecrire(CLE_SESSION, JSON.stringify({ mode: "firebase", pseudo, refresh, uid }));
+    return { pseudo, uid };
+  };
+  const identifier = (methode, pseudoSaisi, mdp) => {
+    const id = normaliserPseudo(pseudoSaisi);
+    return appel(`https://identitytoolkit.googleapis.com/v1/accounts:${methode}?key=${cle}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: id + DOMAINE, password: mdp, returnSecureToken: true }),
+    }).then((r) => entrerSession(r, id));
+  };
+  async function rafraichir() {
+    const r = await appel(`https://securetoken.googleapis.com/v1/token?key=${cle}`, {
+      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(refresh),
+    });
+    entrerSession(r, pseudo);
+  }
+  async function jetonValide() {
+    if (!jeton || Date.now() > expire - 60000) await rafraichir();
+    return jeton;
+  }
+  return {
+    nom: "firebase",
+    inscrire: (p, m) => identifier("signUp", p, m),
+    connecter: (p, m) => identifier("signInWithPassword", p, m),
+    async reprendre() {
+      const s = lireJson(CLE_SESSION);
+      if (!s || s.mode !== "firebase") return null;
+      refresh = s.refresh; pseudo = s.pseudo;
+      try { await rafraichir(); } catch (e) {
+        if (e.statut === 400) { effacer(CLE_SESSION); return null; }  // session périmée : il faut se reconnecter
+        throw e;
+      }
+      return { pseudo, uid };
+    },
+    async charger() {
+      const t = await jetonValide();
+      try {
+        const d = await appel(`${base}/${uid}`, { headers: { Authorization: "Bearer " + t } });
+        const txt = d.fields && d.fields.etat && d.fields.etat.stringValue;
+        return txt ? JSON.parse(txt) : null;
+      } catch (e) {
+        if (e.statut === 404 && /not found/i.test(e.code)) return null;  // pas encore de sauvegarde : compte tout neuf
+        throw e;
+      }
+    },
+    async sauver(texte, keepalive) {
+      const t = await jetonValide();
+      await appel(`${base}/${uid}?updateMask.fieldPaths=etat&updateMask.fieldPaths=pseudo`, {
+        method: "PATCH", keepalive: !!keepalive,
+        headers: { Authorization: "Bearer " + t, "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: { etat: { stringValue: texte }, pseudo: { stringValue: pseudo } } }),
+      });
+    },
+    /* codes de la boutique : tout le monde peut lire UN code (en connaissant son nom), seul l'admin peut les lister et les changer */
+    async lireCode(code) {
+      const t = await jetonValide();
+      try {
+        const d = await appel(`${racine}/codes/${encodeURIComponent(code)}`, { headers: { Authorization: "Bearer " + t } });
+        return JSON.parse(d.fields.donnees.stringValue);
+      } catch (e) {
+        if (e.statut === 404 && /not found/i.test(e.code)) return null;
+        throw e;
+      }
+    },
+    async listerCodes() {
+      const t = await jetonValide();
+      const codes = {};
+      let page = "";
+      do {
+        const d = await appel(`${racine}/codes?pageSize=300` + (page ? "&pageToken=" + encodeURIComponent(page) : ""), { headers: { Authorization: "Bearer " + t } });
+        for (const doc of d.documents || []) {
+          try { codes[decodeURIComponent(doc.name.split("/").pop())] = JSON.parse(doc.fields.donnees.stringValue); } catch (_) { /* document illisible : on l'ignore */ }
+        }
+        page = d.nextPageToken || "";
+      } while (page);
+      return codes;
+    },
+    async sauverCode(code, donnees) {
+      const t = await jetonValide();
+      await appel(`${racine}/codes/${encodeURIComponent(code)}?updateMask.fieldPaths=donnees`, {
+        method: "PATCH", headers: { Authorization: "Bearer " + t, "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: { donnees: { stringValue: JSON.stringify(donnees) } } }),
+      });
+    },
+    async supprimerCode(code) {
+      const t = await jetonValide();
+      await appel(`${racine}/codes/${encodeURIComponent(code)}`, { method: "DELETE", headers: { Authorization: "Bearer " + t } });
+    },
+    /* classement : un document public par joueur (lisible par tous les comptes, modifiable seulement par son propriétaire) */
+    async publier(texte, keepalive) {
+      const t = await jetonValide();
+      await appel(`${racine}/classement/${uid}?updateMask.fieldPaths=profil`, {
+        method: "PATCH", keepalive: !!keepalive,
+        headers: { Authorization: "Bearer " + t, "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: { profil: { stringValue: texte } } }),
+      });
+    },
+    async listerClassement() {
+      const t = await jetonValide();
+      const liste = [];
+      let page = "";
+      do {
+        const d = await appel(`${racine}/classement?pageSize=300` + (page ? "&pageToken=" + encodeURIComponent(page) : ""), { headers: { Authorization: "Bearer " + t } });
+        for (const doc of d.documents || []) {
+          try { liste.push({ ...JSON.parse(doc.fields.profil.stringValue), uid: doc.name.split("/").pop() }); } catch (_) { /* profil illisible : on l'ignore */ }
+        }
+        page = d.nextPageToken || "";
+      } while (page);
+      return liste;
+    },
+    deconnecter() { effacer(CLE_SESSION); },
+  };
+}
+
+/* ---------- sauvegarde de la progression : copie dans le navigateur + envoi au compte ---------- */
+let compte = null;          // { pseudo, uid } du joueur connecté
+let backend = null;         // creerLocal() ou creerFirebase()
+let minuteurEnvoi = null, envoiEnCours = false, aEnvoyer = false;
+
+function afficherSauvegarde(texte, ok) {
+  const p = $("#pied-compte");
+  p.textContent = texte;
+  p.classList.toggle("statut-ok", !!ok);
+}
+function sauvegarder() {
+  etat.maj = Date.now();
+  ecrire(CLE_CACHE + compte.uid, JSON.stringify(etat));
+  aEnvoyer = true;
+  afficherSauvegarde("Sauvegarde…");
+  clearTimeout(minuteurEnvoi);
+  minuteurEnvoi = setTimeout(() => envoyer(false), backend.nom === "local" ? 0 : 1500);
+}
+async function envoyer(keepalive) {
+  clearTimeout(minuteurEnvoi);
+  minuteurEnvoi = null;
+  if (envoiEnCours || !aEnvoyer || !compte) return;
+  envoiEnCours = true;
+  aEnvoyer = false;
+  let ok = true;
+  try { await backend.sauver(JSON.stringify(etat), keepalive); } catch (e) { ok = false; aEnvoyer = true; console.warn(e); }
+  if (ok) { try { await publierProfil(keepalive); } catch (e) { console.warn("classement :", e); } }
+  envoiEnCours = false;
+  if (!ok) {
+    afficherSauvegarde("Hors ligne : ta progression est gardée sur cet appareil et sera envoyée dès que possible.");
+    minuteurEnvoi = setTimeout(() => envoyer(false), 15000);
+  } else if (aEnvoyer) {
+    envoyer(false);
+  } else {
+    afficherSauvegarde(backend.nom === "local" ? "Enregistré dans ce navigateur" : "Sauvegardé en ligne", true);
+  }
+}
+
+/* le profil public : pseudo, score, stats et vitrine (jamais les points de chaque carte) */
+function monProfil() {
+  return { pseudo: compte.pseudo, ...JSON.parse(profilPy(JSON.stringify(etat), CARTES_TXT)) };
+}
+async function publierProfil(keepalive) {
+  if (!profilPy || estAdmin()) return;  // le compte admin ne joue pas dans le classement
+  await backend.publier(JSON.stringify(monProfil()), keepalive);
+}
+
+/* ---------- dessin d'une carte ---------- */
+function etoile() {  // petit symbole des cartes ; remplace-le par ton logo quand tu en auras un
+  const NS = "http://www.w3.org/2000/svg";
+  const s = document.createElementNS(NS, "svg");
+  s.setAttribute("viewBox", "0 0 24 24");
+  s.setAttribute("class", "logo");
+  s.setAttribute("aria-hidden", "true");
+  const p = document.createElementNS(NS, "path");
+  p.setAttribute("d", "M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z");
+  p.setAttribute("fill", "currentColor");
+  s.append(p);
+  return s;
+}
+
+function versoCarte() {
+  const v = el("span", "face verso");
+  const ext = el("span", "ext");
+  const int = el("span", "int");
+  int.append(etoile());
+  ext.append(int);
+  v.append(ext);
+  return v;
+}
+
+function faceCarte(c, o = {}) {
+  const r = rang(c);
+  const fin = o.manquante ? "normale" : o.finition || "normale";
+  const f = el("div", "face recto" + (o.manquante ? " manquante" : ""));
+  f.dataset.r = r;
+  f.dataset.f = classeFin(fin);
+
+  const ext = el("div", "ext");
+  const int = el("div", "int");
+
+  const art = el("div", "art");
+  if (o.manquante) {
+    art.classList.add("sans-image");
+    art.append(el("span", "grand", "?"));
+  } else {
+    const img = new Image();
+    img.alt = "";
+    if (o.paresseux) img.loading = "lazy";
+    img.src = c.image;
+    img.addEventListener("error", () => {
+      img.remove();
+      art.classList.add("sans-image");
+      art.append(el("span", "grand", String(c.id)));
+    });
+    art.append(img);
+  }
+  int.append(art, el("div", "ombre"), el("div", "foil"), el("div", "glare"));
+  const secrete = r === 5 && !o.manquante;
+  if (secrete) int.append(el("div", "s-rayons"), el("div", "s-etoiles"));
+
+  int.append(el("span", "code", REGL.codes[r]));
+  if (c.tag && !o.manquante) int.append(el("span", "tag", c.tag));
+  int.append(el("span", "num", "#" + pad(c.id)));
+
+  const bas = el("div", "bas");
+  if (fin !== "normale") bas.append(el("span", "fin", "✦ " + NOMS_FIN[fin]));
+  const nom = el("span", "nom", o.manquante ? "???" : c.nom);
+  nom.style.fontSize = (c.nom.length > 16 ? 9.5 : c.nom.length > 11 ? 12 : 15) + "cqw";
+  bas.append(nom);
+  int.append(bas, el("i", "trait"), etoile());
+
+  ext.append(int);
+  if (r >= 4 && !o.manquante) ext.append(el("div", "reflet"));
+  if (secrete) f.append(el("span", "aura"));
+  f.append(ext);
+
+  if (o.nouvelle) f.append(el("span", "badge", "Nouvelle"));
+  else if (o.nouvelleFinition) f.append(el("span", "badge", "Nouvelle finition"));
+  if (o.nb > 1) f.append(el("span", "badge nb", "×" + o.nb));
+  if (o.pieces > 0) f.append(el("span", "badge gain", "+" + pluriel(o.pieces, "pièce", "pièces")));
+  return f;
+}
+
+/* la carte s'incline et la lumière suit le doigt ou la souris */
+function activerInclinaison(zone) {
+  if (reduit) return;
+  zone.addEventListener("pointermove", (e) => {
+    if (zone.classList.contains("carte") && !zone.classList.contains("retournee")) return;
+    const b = zone.getBoundingClientRect();
+    const x = Math.min(Math.max((e.clientX - b.left) / b.width, 0), 1);
+    const y = Math.min(Math.max((e.clientY - b.top) / b.height, 0), 1);
+    zone.classList.add("survol");
+    zone.style.setProperty("--mx", (x * 100).toFixed(1) + "%");
+    zone.style.setProperty("--my", (y * 100).toFixed(1) + "%");
+    zone.style.setProperty("--rx", ((0.5 - y) * 16).toFixed(2) + "deg");
+    zone.style.setProperty("--ry", ((x - 0.5) * 18).toFixed(2) + "deg");
+    zone.style.setProperty("--px", (x * 2 - 1).toFixed(2));
+    zone.style.setProperty("--py", (y * 2 - 1).toFixed(2));
+  });
+  const fin = () => {
+    zone.classList.remove("survol");
+    for (const k of ["--mx", "--my", "--rx", "--ry", "--px", "--py"]) zone.style.removeProperty(k);
+  };
+  zone.addEventListener("pointerleave", fin);
+  zone.addEventListener("pointercancel", fin);
+}
+
+/* ---------- ouverture d'un booster : une carte à la fois ---------- */
+function flash(couleur) {
+  if (reduit) return;
+  const f = $("#flash");
+  f.style.setProperty("--fc", couleur);
+  f.classList.remove("on");
+  void f.offsetWidth;
+  f.classList.add("on");
+}
+
+function ambiance(r) {  // la lumière derrière la scène prend la couleur de la rareté
+  const s = $("#scene");
+  if (r === null || r === undefined) s.style.removeProperty("--amb");
+  else s.style.setProperty("--amb", `var(--rc${r})`);
+}
+
+function carteBooster(c, i) {
+  const b = el("button", "carte entre");
+  b.type = "button";
+  b.dataset.r = rang(c);
+  b.setAttribute("aria-label", `Carte ${i + 1} sur ${tirage.length}, face cachée. Retourner.`);
+  const tilt = el("span", "tilt");
+  const flip = el("span", "flip");
+  flip.append(versoCarte(), faceCarte(c, { nouvelle: c.nouvelle, nouvelleFinition: c.nouvelle_finition, finition: c.finition, pieces: c.pieces }));
+  tilt.append(flip);
+  b.append(tilt);
+  b.addEventListener("click", avancer);
+  activerInclinaison(b);
+  return b;
+}
+
+function afficherCarte(i) {
+  idx = i;
+  retournee = false;
+  const b = carteBooster(tirage[i], i);
+  $("#courante").replaceChildren(b);
+  $("#pile").dataset.reste = Math.min(tirage.length - i - 1, 3);
+  $("#courante").classList.toggle("presage", rang(tirage[i]) === 5);  // la carte secrète tremble avant d'être retournée
+  ambiance(null);
+  majProgression();
+  majBoutons();
+  majMessage();
+  b.focus({ preventScroll: true });
+}
+
+function majProgression() {
+  const p = $("#progression");
+  p.replaceChildren();
+  tirage.forEach((c, i) => {
+    const d = el("span", "point");
+    if (i < idx || (i === idx && retournee)) { d.classList.add("vu"); d.dataset.r = rang(c); }
+    if (i === idx) d.classList.add("actuel");
+    p.append(d);
+  });
+}
+
+function dispo() { return etat.stock + etat.achetes; }  // boosters normaux utilisables
+function mmss(ms) {
+  const t = Math.max(0, Math.ceil(ms / 1000));
+  return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
+}
+const attenteCourante = () => JSON.parse(attentePy(JSON.stringify(etat), Date.now()));
+const resteAttente = () => attenteCourante().reste;
+function dureeTxt(ms) {
+  const t = Math.round(ms / 1000), m = Math.floor(t / 60), sec = t % 60;
+  return m === 0 ? `${sec} s` : sec === 0 ? `${m} min` : `${m} min ${sec} s`;
+}
+function dureeLongue(ms) {
+  const m = Math.max(1, Math.ceil(ms / 60000)), h = Math.floor(m / 60);
+  return h > 0 ? `${h} h ${String(m % 60).padStart(2, "0")} min` : `${m} min`;
+}
+function jourLocal() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+const resteAvantMinuit = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1) - d; };
+
+function majPack() {
+  const pret = phase === "pret";
+  $("#pack").disabled = !pret || dispo() <= 0;
+  $("#btn-ur").hidden = !(pret && etat.achetes_ur > 0);
+  if (pret) $("#btn-ur").textContent = `Booster ultra rare garanti (×${etat.achetes_ur})`;
+}
+
+function majBoutons() {
+  const enCours = phase === "reveal";
+  $("#btn-principal").hidden = !enCours;
+  $("#btn-passer").hidden = !enCours;
+  $("#btn-autre").hidden = phase !== "fini";
+  if (enCours) {
+    $("#btn-principal").textContent = !retournee ? "Retourner la carte" : idx === tirage.length - 1 ? "Voir le résumé" : "Carte suivante";
+  }
+  if (phase === "fini") {
+    $("#btn-autre").textContent = file.length ? `Booster suivant (${file.length} restant${file.length > 1 ? "s" : ""})`
+      : dispo() + etat.achetes_ur > 0 ? "Ouvrir un autre booster" : "Retour aux boosters";
+  }
+  majPack();
+}
+
+function majMessage() {
+  const m = $("#message");
+  if (phase === "pret") {
+    const prochain = etat.stock < REGL.stock_max ? `Le prochain booster gratuit arrive dans ${mmss(resteAttente())}.` : "";
+    if (dispo() > 0) m.textContent = "Clique sur le booster pour l'ouvrir.";
+    else if (etat.achetes_ur > 0) m.textContent = `Tu n'as plus de booster normal. ${prochain}`;
+    else m.textContent = `Tu n'as plus de booster. ${prochain} Tu peux aussi en acheter dans la boutique.`;
+  } else if (phase === "ouverture") {
+    m.textContent = "";
+  } else if (phase === "reveal") {
+    const c = tirage[idx];
+    const debut = (fileTotal > 1 ? `Booster ${fileFait} sur ${fileTotal}. ` : "") + `Carte ${idx + 1} sur ${tirage.length}. `;
+    if (!retournee) m.textContent = debut + "Clique sur la carte pour la retourner.";
+    else if (c.nouvelle) m.textContent = debut + "Nouvelle carte !";
+    else if (c.nouvelle_finition) m.textContent = debut + "Tu ne l'avais pas dans cette finition !";
+    else m.textContent = debut + `Un doublon : +${pluriel(c.pieces, "pièce", "pièces")}.`;
+  } else if (phase === "fini") {
+    const n = tirage.filter((c) => c.nouvelle).length;
+    let t = n ? `${pluriel(n, "nouvelle carte", "nouvelles cartes")} dans ce booster.` : "Que des doublons dans ce booster.";
+    if (tirage.some((c) => c.rarete === "secrète")) t += " UNE CARTE SECRÈTE !";
+    else if (tirage.some((c) => c.finition === "arc-en-ciel")) t += " Une carte arc-en-ciel !";
+    else if (tirage.some((c) => c.finition === "brillante")) t += " Une carte brillante !";
+    const gain = tirage.reduce((s, c) => s + (c.pieces || 0), 0);
+    if (gain > 0) t += ` Tes doublons rapportent ${pluriel(gain, "pièce", "pièces")}.`;
+    if (dernierTest) t += " Mode test : rien n'est enregistré.";
+    if (garantieDeclenchee) t += ` La garantie s'est déclenchée : une carte ${REGL.pitie_rarete} ou mieux t'était réservée.`;
+    m.textContent = t;
+  }
+}
+
+async function ouvrir(mode = "normal") {
+  if (phase !== "pret") return;
+  phase = "ouverture";
+  const pack = $("#pack");
+  const garanti = mode === "ur" || mode === "libre_ur";
+  pack.classList.toggle("ur", garanti);
+  $("#pack-titre").textContent = garanti ? "Booster UR" : "Booster";
+  majPack();
+  majMessage();
+  let res;
+  try {
+    res = JSON.parse(ouvrirPy(CARTES_TXT, JSON.stringify(etat), Date.now(), mode));
+  } catch (e) {
+    console.error(e);
+    phase = "pret";
+    majPack();
+    $("#message").textContent = "Le tirage a échoué : " + (e.message || e);
+    return;
+  }
+  const test = mode.startsWith("libre") && adminTest;  // mode test de l'admin : on ne garde rien
+  if (!test || res.erreur) etat = res.etat;
+  if (res.erreur) {
+    file = []; fileTotal = 0;
+    phase = "pret";
+    majStats(); majPack();
+    $("#message").textContent = res.erreur;
+    return;
+  }
+  dernierTest = test;
+  tirage = res.cartes;
+  garantieDeclenchee = res.pitie;
+  gainRestant = test ? 0 : tirage.reduce((s, c) => s + (c.pieces || 0), 0);
+  if (!test) sauvegarder();
+  majStats();
+
+  pack.classList.add("ouvre");
+  await attendre(reduit ? 0 : 950);
+  pack.hidden = true;
+  $("#stage").hidden = false;
+  phase = "reveal";
+  afficherCarte(0);
+}
+
+function avancer() {
+  if (phase !== "reveal" || occupe) return;
+  if (!retournee) retournerCourante();
+  else suivante();
+}
+
+function retournerCourante() {
+  const b = $("#courante .carte");
+  const c = tirage[idx];
+  if (!b || retournee) return;
+  retournee = true;
+  b.classList.remove("entre");
+  b.classList.add("retournee");
+  const fin = c.finition !== "normale" ? ", " + NOMS_FIN[c.finition].toLowerCase() : "";
+  b.setAttribute("aria-label", `${c.nom}, ${c.rarete}${fin}${c.nouvelle ? ", nouvelle" : ""}`);
+  gainRestant -= c.pieces || 0;
+  majPieces();
+  const r = rang(c);
+  if (r >= 2 || c.finition !== "normale") b.classList.add("eclat");
+  ambiance(r);
+  $("#courante").classList.remove("presage");
+  if (r === 5) revelationSecrete();
+  else if (c.finition === "arc-en-ciel") flash("#ffffff");
+  else if (r >= 3) flash(`var(--rc${r})`);
+  majProgression();
+  majBoutons();
+  majMessage();
+}
+
+async function suivante() {
+  finSecret();
+  if (idx >= tirage.length - 1) return terminer();
+  occupe = true;
+  const b = $("#courante .carte");
+  if (b && !reduit) { b.classList.remove("entre"); b.classList.add("sort"); await attendre(300); }
+  occupe = false;
+  afficherCarte(idx + 1);
+}
+
+function passer() {
+  if (phase !== "reveal") return;
+  finSecret();
+  gainRestant = 0;
+  majPieces();
+  terminer();
+}
+
+function carteResume(c, i) {
+  const conteneur = el("div", "carte-fixe");
+  conteneur.dataset.r = rang(c);
+  conteneur.style.setProperty("--delai", i * 90 + "ms");
+  const tilt = el("div", "tilt");
+  tilt.append(faceCarte(c, { nouvelle: c.nouvelle, nouvelleFinition: c.nouvelle_finition, finition: c.finition, pieces: c.pieces }));
+  conteneur.append(tilt);
+  activerInclinaison(conteneur);
+  return conteneur;
+}
+
+function terminer() {
+  phase = "fini";
+  $("#stage").hidden = true;
+  const rangee = $("#rangee");
+  rangee.replaceChildren(...tirage.map(carteResume));
+  rangee.hidden = false;
+  rangee.classList.add("distribue");
+  ambiance(Math.max(...tirage.map(rang)));
+  majBoutons();
+  majMessage();
+  majCollection();
+  $("#btn-autre").focus({ preventScroll: true });
+}
+
+function autreBooster() {
+  finSecret();
+  const rangee = $("#rangee");
+  rangee.hidden = true;
+  rangee.replaceChildren();
+  rangee.classList.remove("distribue");
+  $("#stage").hidden = true;
+  const pack = $("#pack");
+  pack.classList.remove("ouvre", "ur");
+  $("#pack-titre").textContent = "Booster";
+  pack.hidden = false;
+  ambiance(null);
+  phase = "pret";
+  majBoutons();
+  majMessage();
+  if (!pack.disabled) pack.focus({ preventScroll: true });
+}
+
+/* ---------- statistiques et réserve de boosters ---------- */
+function majPieces() {
+  $("#st-pieces").textContent = etat.monnaie - gainRestant;
+  $("#solde").textContent = etat.monnaie - gainRestant;
+}
+
+function majStats() {
+  const nbDispo = dispo() + etat.achetes_ur;
+  $("#st-ouverts").textContent = etat.boosters_ouverts;
+  $("#st-ouverts-lbl").textContent = etat.boosters_ouverts > 1 ? "ouverts" : "ouvert";
+  $("#st-dispo").textContent = nbDispo;
+  $("#st-dispo-lbl").textContent = nbDispo > 1 ? "boosters" : "booster";
+  majPieces();
+  majReserve();
+}
+
+function majReserve(a) {
+  a = a || attenteCourante();
+  $("#st-stock").textContent = `${etat.stock} / ${REGL.stock_max}`;
+  let note = a.plein ? "Réserve pleine : ouvre un booster pour relancer l'attente." : `Prochain booster gratuit dans ${mmss(a.reste)}.`;
+  $("#jauge").style.width = (a.plein ? 1 : a.part) * 100 + "%";
+  if (a.facteur > 1) note += ` Multiplicateur ×${a.facteur} : un booster toutes les ${dureeTxt(REGL.intervalle_ms / a.facteur)}, encore ${mmss(a.multi_reste)}.`;
+  const achetes = [];
+  if (etat.achetes > 0) achetes.push(pluriel(etat.achetes, "booster acheté ou gagné", "boosters achetés ou gagnés"));
+  if (etat.achetes_ur > 0) achetes.push(pluriel(etat.achetes_ur, "booster ultra rare garanti", "boosters ultra rare garantis"));
+  if (achetes.length) note += " En plus : " + achetes.join(" et ") + ".";
+  $("#st-note").textContent = note;
+  const pm = $("#puce-multi");
+  pm.hidden = !(a.facteur > 1);
+  if (!pm.hidden) $("#st-multi").textContent = `×${a.facteur} · ${mmss(a.multi_reste)}`;
+}
+
+/* le temps passe : un booster gratuit de plus toutes les 15 minutes */
+function synchroniser() {
+  etat = JSON.parse(synchroPy(JSON.stringify(etat), Date.now()));
+  sauvegarder();
+  majStats();
+  majPack();
+  majBoutons();
+  if (phase === "pret") majMessage();
+  if (!$("#v-boutique").hidden) rendreBoutique();
+}
+function tictac() {
+  if (!compte || !etat || roueEnCours) return;
+  const a = attenteCourante();
+  const expire = !!etat.multi && Date.now() >= etat.multi.fin;
+  if ((etat.stock < REGL.stock_max && a.pret) || expire) synchroniser();
+  else {
+    majReserve(a);
+    if (phase === "pret" && dispo() <= 0) majMessage();
+  }
+  majRoue();
+}
+
+/* ---------- la carte secrète : un vrai moment ---------- */
+let minuteurSecret = null;
+function revelationSecrete() {
+  if (reduit) { flash("#ffffff"); return; }
+  const fx = $("#secret-fx");
+  const gerbe = $("#fx-etincelles");
+  gerbe.replaceChildren();
+  for (let i = 0; i < 52; i++) {
+    const s = el("span");
+    s.style.setProperty("--a", (Math.random() * 360).toFixed(0) + "deg");
+    s.style.setProperty("--d", (14 + Math.random() * 46).toFixed(0) + "vmin");
+    s.style.setProperty("--z", (0.5 + Math.random() * 1.5).toFixed(2));
+    s.style.setProperty("--t", (1 + Math.random() * 1.5).toFixed(2) + "s");
+    gerbe.append(s);
+  }
+  const ban = $("#secret-banniere");
+  const cr = $("#courante").getBoundingClientRect();   // la bannière se pose sur la carte, puis s'efface
+  ban.style.top = Math.max(cr.top + cr.height * 0.4 - ban.offsetHeight / 2, 8) + "px";
+  fx.classList.remove("on"); ban.classList.remove("on");
+  void fx.offsetWidth;
+  fx.classList.add("on"); ban.classList.add("on");
+  flash("#ffffff");
+  setTimeout(() => flash("#9ec5ff"), 380);
+  const sc = $("#scene");
+  sc.classList.remove("secoue"); void sc.offsetWidth; sc.classList.add("secoue");
+  if (navigator.vibrate) navigator.vibrate([90, 50, 90, 50, 220]);
+  clearTimeout(minuteurSecret);
+  minuteurSecret = setTimeout(finSecret, 12000);
+}
+function finSecret() {
+  clearTimeout(minuteurSecret);
+  $("#secret-fx").classList.remove("on");
+  $("#secret-banniere").classList.remove("on");
+  $("#scene").classList.remove("secoue");
+}
+
+/* ---------- boutique ---------- */
+function rendreBoutique() {
+  const zone = $("#boutique");
+  const solde = etat.monnaie - gainRestant;
+  $("#solde").textContent = solde;
+  zone.replaceChildren(...REGL.boutique.map((o) => {
+    const a = el("div", "panneau article");
+    const haut = el("div", "article-haut");
+    const mini = el("span", "mini" + (o.id === "x10" ? " x10" : o.id === "ur" ? " ur" : ""), o.id === "x10" ? "×10" : o.id === "ur" ? "UR" : "1");
+    mini.setAttribute("aria-hidden", "true");
+    const txt = el("div");
+    txt.append(el("h3", "", o.nom), el("p", "", o.texte));
+    haut.append(mini, txt);
+    const prix = el("div", "prix");
+    prix.append(el("b", "", String(o.prix)), el("span", "", "pièces"));
+    const b = el("button", "btn", solde >= o.prix ? "Acheter" : "Pas assez de pièces");
+    b.type = "button";
+    b.disabled = solde < o.prix;
+    b.addEventListener("click", () => acheter(o.id));
+    a.append(haut, prix, b);
+    return a;
+  }));
+}
+
+/* une série de boosters à ouvrir tout de suite, l'un après l'autre */
+function lancerFile(modes) {
+  if (!modes.length || phase === "ouverture" || phase === "reveal") return;
+  file = modes.slice();
+  fileTotal = file.length;
+  fileFait = 0;
+  onglet("boosters");
+  if (phase === "fini") autreBooster();
+  ouvrirDeLaFile();
+}
+function ouvrirDeLaFile() {
+  const mode = file.shift();
+  fileFait++;
+  return ouvrir(mode);
+}
+function ouvrirIsole(mode) {
+  file = []; fileTotal = 0; fileFait = 0;
+  return ouvrir(mode);
+}
+function suite() {
+  autreBooster();
+  if (file.length) ouvrirDeLaFile();
+}
+const modesDe = (g) => [...Array(g.boosters || 0).fill("achete"), ...Array(g.ur || 0).fill("ur")];
+
+function acheter(id) {
+  const msg = $("#boutique-msg");
+  if (phase === "ouverture" || phase === "reveal") { msg.textContent = "Termine d'abord d'ouvrir ton booster."; return; }
+  let r;
+  try { r = JSON.parse(acheterPy(JSON.stringify(etat), id, Date.now())); }
+  catch (e) { console.error(e); msg.textContent = "L'achat a échoué."; return; }
+  etat = r.etat;
+  if (r.erreur) {
+    msg.textContent = r.erreur;
+    majStats(); majPack(); rendreBoutique();
+    return;
+  }
+  const o = REGL.boutique.find((x) => x.id === id);
+  msg.textContent = `Acheté : ${o.nom}.`;
+  sauvegarder();
+  majStats();
+  majPack();
+  rendreBoutique();
+  lancerFile(modesDe(o));   // on va directement ouvrir ce qu'on vient d'acheter
+}
+
+/* ---------- roue de la chance ---------- */
+const COULEURS_ROUE = { p10: "#d9a93a", p25: "#f2c14e", p50: "#ffd978", b1: "#4c9bff", x2: "#a85cff", x3: "#ff5fa8", x5: "#ff4458", rien: "#2a3948" };
+function dessinerRoue() {
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = $("#roue");
+  svg.replaceChildren();
+  const total = REGL.roue.reduce((s, g) => s + g.poids, 0);
+  const pt = (a, r) => [r * Math.sin((a * Math.PI) / 180), -r * Math.cos((a * Math.PI) / 180)];
+  let a0 = 0;
+  segmentsRoue = [];
+  for (const g of REGL.roue) {
+    const a1 = a0 + (g.poids / total) * 360;
+    segmentsRoue.push({ id: g.id, a0, a1 });
+    const [x0, y0] = pt(a0, 100), [x1, y1] = pt(a1, 100);
+    const chemin = document.createElementNS(NS, "path");
+    chemin.setAttribute("d", `M0 0 L${x0.toFixed(2)} ${y0.toFixed(2)} A100 100 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z`);
+    chemin.setAttribute("fill", COULEURS_ROUE[g.id] || "#456");
+    chemin.setAttribute("stroke", "#0b1119");
+    chemin.setAttribute("stroke-width", "1.6");
+    const t = document.createElementNS(NS, "text");
+    t.setAttribute("transform", `rotate(${((a0 + a1) / 2 - 90).toFixed(1)})`);
+    t.setAttribute("x", "90");
+    t.setAttribute("text-anchor", "end");
+    t.setAttribute("dominant-baseline", "central");
+    t.setAttribute("font-size", g.poids >= 20 ? "12" : "10");
+    t.setAttribute("fill", g.id === "rien" ? "#8c9db0" : g.id.startsWith("p") ? "#1d1503" : "#ffffff");
+    t.textContent = g.court;
+    svg.append(chemin, t);
+    a0 = a1;
+  }
+  const centre = document.createElementNS(NS, "circle");
+  centre.setAttribute("r", "9");
+  centre.setAttribute("fill", "#0b1119");
+  centre.setAttribute("stroke", "#ffffff");
+  centre.setAttribute("stroke-width", "2");
+  svg.append(centre);
+}
+
+function majRoue() {
+  if (!etat) return;
+  const fait = etat.roue_jour === jourLocal();
+  $("#roue-btn").disabled = fait || roueEnCours;
+  if (!roueEnCours) $("#roue-compte").textContent = fait ? `Ton tour du jour est utilisé. Prochain tour à minuit, dans ${dureeLongue(resteAvantMinuit())}.` : "Ton tour du jour est disponible !";
+}
+
+async function tournerRoue() {
+  if (roueEnCours || etat.roue_jour === jourLocal()) return;
+  let r;
+  try { r = JSON.parse(roueurPy(JSON.stringify(etat), jourLocal(), Date.now())); }
+  catch (e) { console.error(e); $("#roue-resultat").textContent = "La roue a eu un souci."; return; }
+  if (r.erreur) { $("#roue-resultat").textContent = r.erreur; return; }
+  roueEnCours = true;
+  $("#roue-btn").disabled = true;
+  $("#roue-resultat").replaceChildren();
+  $("#roue-compte").textContent = "La roue tourne…";
+  etat = r.etat;
+  sauvegarder();   // le tour est enregistré tout de suite : recharger la page ne permet pas de retirer
+  const g = r.gain;
+  const seg = segmentsRoue.find((x) => x.id === g.id);
+  const angle = (seg.a0 + seg.a1) / 2 + (Math.random() * 2 - 1) * (seg.a1 - seg.a0) * 0.35;
+  rotRoue = Math.ceil(rotRoue / 360) * 360 + 360 * 6 + (360 - angle);
+  $("#roue").style.transform = `rotate(${rotRoue}deg)`;
+  await attendre(reduit ? 0 : 5600);
+  roueEnCours = false;
+
+  majStats(); rendreBoutique(); majRoue();
+  const zone = $("#roue-resultat");
+  let texte;
+  if (g.id === "rien") texte = "Rien cette fois… Reviens demain !";
+  else if (g.pieces) texte = `Tu gagnes ${g.pieces} pièces !`;
+  else if (g.boosters) texte = "Tu gagnes un booster !";
+  else texte = `Multiplicateur ×${g.multi} ! Un booster gratuit toutes les ${dureeTxt(REGL.intervalle_ms / g.multi)} pendant ${Math.round(REGL.multi_duree_ms / 60000)} minutes.`;
+  zone.append(texte);
+  if (g.boosters) {
+    zone.append(el("br"));
+    const b = el("button", "btn", "Ouvrir mon booster");
+    b.type = "button";
+    b.addEventListener("click", () => lancerFile(["achete"]));
+    zone.append(b);
+  }
+}
+
+/* ---------- codes ---------- */
+const normaliserCode = (c) => c.trim().normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, "");
+const codeValide = (c) => /^[a-z0-9_-]{2,40}$/.test(c);
+function messageCourt(zone, texte, genre) {
+  zone.textContent = texte;
+  zone.className = "msg-court" + (genre ? " " + genre : "");
+}
+
+async function validerCode(e) {
+  e.preventDefault();
+  const msg = $("#code-msg");
+  if (phase === "ouverture" || phase === "reveal") return messageCourt(msg, "Termine d'abord d'ouvrir ton booster.", "ko");
+  const code = normaliserCode($("#code-saisie").value);
+  if (!codeValide(code)) return messageCourt(msg, "Ce code n'est pas valide.", "ko");
+  if (etat.codes_utilises.includes(code)) return messageCourt(msg, "Tu as déjà utilisé ce code.", "ko");
+  const bouton = $("#code-valider");
+  bouton.disabled = true;
+  messageCourt(msg, "Vérification…");
+  try {
+    const rec = await backend.lireCode(code);
+    if (!rec || !rec.actif) return messageCourt(msg, "Ce code n'existe pas ou n'est plus valable.", "ko");
+    const r = JSON.parse(codePy(JSON.stringify(etat), code, JSON.stringify(rec), Date.now()));
+    etat = r.etat;
+    if (r.erreur) return messageCourt(msg, r.erreur, "ko");
+    sauvegarder();
+    const g = r.gain, parts = [];
+    if (g.boosters) parts.push(pluriel(g.boosters, "booster", "boosters"));
+    if (g.ur) parts.push(pluriel(g.ur, "booster ultra rare", "boosters ultra rare"));
+    if (g.pieces) parts.push(pluriel(g.pieces, "pièce", "pièces"));
+    messageCourt(msg, "Code accepté : tu gagnes " + parts.join(", ") + " !", "ok");
+    $("#code-saisie").value = "";
+    majStats(); majPack(); rendreBoutique();
+    lancerFile(modesDe(g));
+  } catch (err) {
+    messageCourt(msg, err.message || String(err), "ko");
+  } finally {
+    bouton.disabled = false;
+  }
+}
+
+/* ---------- compte admin : codes et ouverture libre ---------- */
+const estAdmin = () => !!compte && !!REGL && compte.pseudo === REGL.admin;
+
+function resumeCode(d) {
+  const p = [];
+  if (d.boosters) p.push(pluriel(d.boosters, "booster", "boosters"));
+  if (d.ur) p.push(pluriel(d.ur, "booster ultra rare", "boosters ultra rare"));
+  if (d.pieces) p.push(pluriel(d.pieces, "pièce", "pièces"));
+  return p.join(", ") || "rien";
+}
+
+async function rendreAdmin() {
+  const zone = $("#liste-codes");
+  zone.textContent = "Chargement des codes…";
+  try { codesAdmin = await backend.listerCodes(); } catch (e) { zone.textContent = e.message || String(e); return; }
+  const noms = Object.keys(codesAdmin).sort();
+  if (!noms.length) { zone.textContent = "Aucun code pour l'instant."; return; }
+  const t = el("table");
+  const thead = el("thead"), hd = el("tr");
+  ["Code", "Récompense", "État", ""].forEach((h) => hd.append(el("th", "", h)));
+  thead.append(hd);
+  const corps = el("tbody");
+  for (const nom of noms) {
+    const d = codesAdmin[nom];
+    const tr = el("tr");
+    tr.append(el("td", "", nom), el("td", "", resumeCode(d)), el("td", d.actif ? "etat-actif" : "etat-off", d.actif ? "Actif" : "Désactivé"));
+    const act = el("td", "act");
+    const bouton = (libelle, action) => { const b = el("button", "btn second petit", libelle); b.type = "button"; b.addEventListener("click", action); act.append(b); };
+    bouton("Modifier", () => {
+      $("#ac-code").value = nom;
+      $("#ac-boosters").value = d.boosters || 0;
+      $("#ac-ur").value = d.ur || 0;
+      $("#ac-pieces").value = d.pieces || 0;
+      $("#ac-code").focus();
+    });
+    bouton(d.actif ? "Désactiver" : "Activer", async () => {
+      try { await backend.sauverCode(nom, { ...d, actif: !d.actif }); } catch (e) { messageCourt($("#ac-msg"), e.message || String(e), "ko"); }
+      rendreAdmin();
+    });
+    bouton("Supprimer", async () => {
+      if (!confirm(`Supprimer le code « ${nom} » ?`)) return;
+      try { await backend.supprimerCode(nom); } catch (e) { messageCourt($("#ac-msg"), e.message || String(e), "ko"); }
+      rendreAdmin();
+    });
+    tr.append(act);
+    corps.append(tr);
+  }
+  t.append(thead, corps);
+  zone.replaceChildren(t);
+}
+
+async function enregistrerCode(e) {
+  e.preventDefault();
+  const msg = $("#ac-msg");
+  const code = normaliserCode($("#ac-code").value);
+  if (!codeValide(code)) return messageCourt(msg, "Le code doit faire 2 à 40 caractères : lettres, chiffres, - et _.", "ko");
+  const n = (id) => Math.max(0, Math.min(100000, Math.floor(Number($(id).value) || 0)));
+  const donnees = { boosters: n("#ac-boosters"), ur: n("#ac-ur"), pieces: n("#ac-pieces"), actif: true };
+  if (!donnees.boosters && !donnees.ur && !donnees.pieces) return messageCourt(msg, "Ce code ne donnerait rien.", "ko");
+  if (codesAdmin[code]) donnees.actif = codesAdmin[code].actif;   // modifier un code ne change pas son état
+  try {
+    await backend.sauverCode(code, donnees);
+    messageCourt(msg, `Code « ${code} » enregistré : ${resumeCode(donnees)}.`, "ok");
+    $("#form-admin-code").reset();
+    $("#ac-boosters").value = 1;
+  } catch (err) { messageCourt(msg, err.message || String(err), "ko"); return; }
+  rendreAdmin();
+}
+
+function adminOuvrir(modes) {
+  adminTest = $("#admin-test").checked;
+  lancerFile(modes);
+}
+
+/* ---------- collection ---------- */
+const exemplaires = (c) => {
+  const n = etat.collection[String(c.id)] || 0;
+  const f = etat.finitions[String(c.id)] || {};
+  const b = f["brillante"] || 0, a = f["arc-en-ciel"] || 0;
+  return { total: n, "normale": Math.max(n - b - a, 0), "brillante": b, "arc-en-ciel": a };
+};
+const meilleureFinition = (c) => {
+  const e = exemplaires(c);
+  return e["arc-en-ciel"] > 0 ? "arc-en-ciel" : e["brillante"] > 0 ? "brillante" : "normale";
+};
+
+function majCollection() {
+  const nb = (c) => etat.collection[String(c.id)] || 0;
+  const possedees = CARTES.filter((c) => nb(c) > 0).length;
+  const brillantes = CARTES.filter((c) => exemplaires(c)["brillante"] > 0).length;
+  const arcs = CARTES.filter((c) => exemplaires(c)["arc-en-ciel"] > 0).length;
+  $("#t-compte").textContent = `${possedees}/${CARTES.length}`;
+  $("#coll-titre").textContent = `${possedees} cartes sur ${CARTES.length}`;
+  $("#coll-finitions").textContent = `${pluriel(brillantes, "carte brillante", "cartes brillantes")} · ${pluriel(arcs, "carte arc-en-ciel", "cartes arc-en-ciel")}`;
+  $("#coll-jauge").style.width = (CARTES.length ? (possedees / CARTES.length) * 100 : 0) + "%";
+
+  const pastille = (conteneur, libelle, actif, action, r) => {
+    const b = el("button", "", libelle);
+    b.type = "button";
+    if (r !== undefined) b.dataset.r = r;
+    b.setAttribute("aria-pressed", String(actif));
+    b.addEventListener("click", action);
+    conteneur.append(b);
+  };
+
+  const choixSerie = $("#coll-serie");
+  if (choixSerie.options.length === 1) {
+    for (const t of [...new Set(CARTES.map((c) => c.tag).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"))) choixSerie.add(new Option(majuscule(t), t));
+  }
+  choixSerie.value = serieColl;
+  $("#coll-tri").value = triColl;
+
+  const filtres = $("#filtres");
+  filtres.replaceChildren();
+  pastille(filtres, "Toutes les raretés", filtre === -1, () => { filtre = -1; majCollection(); });
+  REGL.ordre.forEach((nom, r) => {
+    const lot = CARTES.filter((c) => rang(c) === r);
+    if (!lot.length) return;
+    pastille(filtres, `${majuscule(nom)} ${lot.filter((c) => nb(c) > 0).length}/${lot.length}`, filtre === r, () => { filtre = r; majCollection(); }, r);
+  });
+
+  const etats = [["toutes", "Toutes"], ["possedees", "Possédées"], ["manquantes", "Manquantes"], ["brillantes", "Brillantes"], ["arc", "Arc-en-ciel"]];
+  const fs = $("#filtres-statut");
+  fs.replaceChildren();
+  for (const [cle, libelle] of etats) pastille(fs, libelle, statut === cle, () => { statut = cle; majCollection(); });
+
+  const passe = (c) => {
+    if (filtre !== -1 && rang(c) !== filtre) return false;
+    if (serieColl && (c.tag || "") !== serieColl) return false;
+    const e = exemplaires(c);
+    if (statut === "possedees") return e.total > 0;
+    if (statut === "manquantes") return e.total === 0;
+    if (statut === "brillantes") return e["brillante"] > 0;
+    if (statut === "arc") return e["arc-en-ciel"] > 0;
+    return true;
+  };
+  const comparer = {
+    "rarete-asc": (a, b) => rang(a) - rang(b) || a.id - b.id,
+    "rarete-desc": (a, b) => rang(b) - rang(a) || a.id - b.id,
+    numero: (a, b) => a.id - b.id,
+    nom: (a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }),
+    serie: (a, b) => (a.tag || "").localeCompare(b.tag || "", "fr") || rang(b) - rang(a) || a.id - b.id,
+    exemplaires: (a, b) => nb(b) - nb(a) || rang(b) - rang(a) || a.id - b.id,
+  }[triColl];
+  const visibles = CARTES.filter(passe).sort(comparer);
+  const possedeesVisibles = visibles.filter((c) => nb(c) > 0);
+
+  const grille = $("#grille");
+  grille.replaceChildren();
+  if (!visibles.length) grille.append(el("p", "vide", "Aucune carte ici pour l'instant."));
+  let groupe = null;
+  visibles.forEach((c) => {
+    if (triColl === "serie" || triColl.startsWith("rarete")) {
+      const g = triColl === "serie" ? (c.tag || "Sans série") : c.rarete;
+      if (g !== groupe) {
+        groupe = g;
+        const lot = visibles.filter((x) => (triColl === "serie" ? (x.tag || "Sans série") : x.rarete) === g);
+        grille.append(el("h3", "groupe-titre", `${majuscule(g)} · ${lot.filter((x) => nb(x) > 0).length}/${lot.length}`));
+      }
+    }
+    const n = nb(c);
+    const conteneur = el(n ? "button" : "div", "carte-fixe");
+    conteneur.dataset.r = rang(c);
+    const tilt = el("div", "tilt");
+    tilt.append(faceCarte(c, { manquante: n === 0, nb: n, finition: meilleureFinition(c), paresseux: true }));
+    conteneur.append(tilt);
+    if (n === 0) {
+      conteneur.setAttribute("aria-label", `Carte n° ${c.id}, pas encore trouvée`);
+    } else {
+      conteneur.type = "button";
+      conteneur.setAttribute("aria-label", `${c.nom}, ${c.rarete}. Voir en grand.`);
+      activerInclinaison(conteneur);
+      conteneur.addEventListener("click", () => ouvrirZoom(possedeesVisibles, possedeesVisibles.indexOf(c)));
+    }
+    grille.append(conteneur);
+  });
+}
+
+/* ---------- carte en grand ---------- */
+let listeZoom = [];
+let iZoom = 0;
+let finZoom = "normale";
+let declencheurZoom = null;
+
+function ouvrirZoom(liste, i) {
+  listeZoom = liste;
+  iZoom = i;
+  finZoom = meilleureFinition(liste[i]);
+  declencheurZoom = document.activeElement;
+  rendreZoom();
+  $("#zoom").showModal();
+}
+
+function rendreZoom() {
+  const c = listeZoom[iZoom];
+  const e = exemplaires(c);
+  if (!(e[finZoom] > 0)) finZoom = meilleureFinition(c);
+
+  const cont = el("div", "carte-fixe");
+  cont.dataset.r = rang(c);
+  const tilt = el("div", "tilt");
+  tilt.append(faceCarte(c, { finition: finZoom }));
+  cont.append(tilt);
+  activerInclinaison(cont);
+  $("#zoom-carte").replaceChildren(cont);
+
+  $("#zoom-nom").textContent = c.nom;
+  $("#zoom-details").textContent = `${majuscule(c.rarete)} · n° ${pad(c.id)} · ${pluriel(e.total, "exemplaire", "exemplaires")}`;
+
+  const fins = $("#zoom-fins");
+  fins.replaceChildren();
+  for (const f of FINITIONS) {
+    const b = el("button", "", `${f === "normale" ? "Normale" : NOMS_FIN[f]} ${e[f] > 0 ? "×" + e[f] : "—"}`);
+    b.type = "button";
+    b.disabled = !(e[f] > 0);
+    b.setAttribute("aria-pressed", String(f === finZoom));
+    b.addEventListener("click", () => { finZoom = f; rendreZoom(); });
+    fins.append(b);
+  }
+
+  const r = rang(c);
+  const valeur = Math.floor(REGL.valeurs[r] * (REGL.bonus[finZoom] || 1) + 0.5);
+  $("#zoom-valeur").textContent = `Un doublon de cette carte en version ${finZoom === "normale" ? "normale" : NOMS_FIN[finZoom].toLowerCase()} rapporte ${pluriel(valeur, "pièce", "pièces")}.`;
+  $("#zoom-prec").disabled = listeZoom.length < 2;
+  $("#zoom-suiv").disabled = listeZoom.length < 2;
+}
+
+function naviguerZoom(sens) {
+  if (listeZoom.length < 2) return;
+  iZoom = (iZoom + sens + listeZoom.length) % listeZoom.length;
+  finZoom = meilleureFinition(listeZoom[iZoom]);
+  rendreZoom();
+}
+
+/* ---------- onglet Infos : les taux et les valeurs, calculés à partir du moteur ---------- */
+function pourcent(x) {
+  const v = x * 100;
+  return (v >= 10 ? String(Math.round(v)) : v >= 1 ? v.toFixed(1) : v.toFixed(2)).replace(".", ",") + " %";
+}
+function uneSur(p) { return p >= 0.5 ? Math.round(p * 100) + " %" : "1 sur " + Math.round(1 / p); }
+
+function tableau(entetes, lignes) {
+  const t = el("table");
+  const hd = el("tr");
+  entetes.forEach((h) => hd.append(el("th", "", h)));
+  const thead = el("thead");
+  thead.append(hd);
+  t.append(thead);
+  const corps = el("tbody");
+  lignes.forEach(({ r, cellules }) => {
+    const tr = el("tr");
+    cellules.forEach((v, k) => {
+      const td = el("td", k === 0 ? "rar" : "", v);
+      if (k === 0) td.dataset.r = r;
+      tr.append(td);
+    });
+    corps.append(tr);
+  });
+  t.append(corps);
+  const enveloppe = el("div", "table-defile");
+  enveloppe.append(t);
+  return enveloppe;
+}
+
+function bloc(titre, texte, contenu, cls) {
+  const b = el("div", "panneau" + (cls ? " " + cls : ""));
+  b.append(el("h3", "", titre));
+  if (texte) b.append(el("p", "", texte));
+  if (contenu) b.append(contenu);
+  return b;
+}
+
+function rendreInfos() {
+  const nbCartes = REGL.ordre.map((r) => CARTES.filter((c) => c.rarete === r).length);
+  const poids = REGL.poids.map((p, r) => (nbCartes[r] ? p : 0));
+  const total = poids.reduce((a, b) => a + b, 0);
+  const n = REGL.taille_booster;
+  const iG = REGL.garantie_derniere ? REGL.ordre.indexOf(REGL.garantie_derniere) : -1;
+  const totalG = poids.reduce((a, p, r) => a + (iG >= 0 && r >= iG ? p : 0), 0);
+
+  const taux = REGL.ordre.map((nom, r) => {
+    const p = poids[r] / total;
+    const pDerniere = iG >= 0 && r >= iG ? poids[r] / totalG : 0;
+    const pBooster = iG >= 0 ? 1 - Math.pow(1 - p, n - 1) * (1 - pDerniere) : 1 - Math.pow(1 - p, n);
+    const pPrecise = nbCartes[r] ? 1 - Math.pow(1 - p / nbCartes[r], n) : 0;
+    return { r, cellules: [majuscule(nom), String(nbCartes[r]), pourcent(p), nbCartes[r] ? uneSur(pBooster) : "—", nbCartes[r] ? uneSur(pPrecise) : "—"] };
+  });
+  const valeurs = REGL.ordre.map((nom, r) => ({
+    r, cellules: [majuscule(nom), ...FINITIONS.map((f) => String(Math.floor(REGL.valeurs[r] * (REGL.bonus[f] || 1) + 0.5)))],
+  }));
+  const offres = REGL.boutique.map((o) => ({ r: "", cellules: [o.nom, o.prix + " pièces", o.texte] }));
+  const minutes = Math.round(REGL.intervalle_ms / 60000);
+
+  const infos = $("#infos");
+  infos.replaceChildren(
+    bloc("Chances de tirage", `Un booster contient ${pluriel(n, "carte", "cartes")}` +
+      (iG >= 0 ? `, et la dernière est toujours ${REGL.garantie_derniere} ou mieux` : "") + ". Les chiffres sont des moyennes.",
+      tableau(["Rareté", "Cartes", "Par carte tirée", "Dans un booster", "Une carte précise"], taux)),
+    el("div", "deux-col"),
+    bloc("Boosters gratuits et boutique", `Tu reçois un booster gratuit toutes les ${minutes} minutes, ${REGL.stock_max} au maximum en réserve : ` +
+      "quand elle est pleine, l'attente s'arrête jusqu'à ce que tu en ouvres un. Les boosters achetés ne comptent pas dans cette limite.",
+      tableau(["Offre", "Prix", "Contenu"], offres)),
+  );
+  infos.children[1].append(
+    bloc("Pièces gagnées avec un doublon", "Plus la carte est rare, plus elle rapporte, et les finitions rapportent un peu plus.",
+      tableau(["Rareté", "Normale", "Brillante", "Arc-en-ciel"], valeurs)),
+    bloc("Finitions", `Chaque carte tirée peut être brillante (${uneSur(REGL.chance_brillante)}) ou arc-en-ciel (${uneSur(REGL.chance_arc)}), quelle que soit sa rareté. ` +
+      "La brillante a un reflet blanc qui balaie la carte. L'arc-en-ciel a un cadre et des reflets multicolores, d'autant plus marqués que la carte est rare."),
+  );
+  const multis = REGL.roue.filter((g) => g.multi).map((g) => `×${g.multi} : un booster toutes les ${dureeTxt(REGL.intervalle_ms / g.multi)}`);
+  infos.append(bloc("Roue de la chance", `Un tour par jour, remis à zéro à minuit. Les multiplicateurs accélèrent tes boosters gratuits pendant ${Math.round(REGL.multi_duree_ms / 60000)} minutes (${multis.join(" ; ")}).`,
+    tableau(["Récompense", "Chance"], REGL.roue.map((g) => ({ r: "", cellules: [g.texte, pourcent(g.poids / 100)] })))));
+  if (REGL.pitie_apres) {
+    infos.append(bloc("Garantie", `Si tu n'as pas eu de carte ${REGL.pitie_rarete} ou mieux pendant ${REGL.pitie_apres} boosters, le suivant en contient une.`));
+  }
+}
+
+/* ---------- classement et profils ---------- */
+let profils = [];
+let profilOuvert = null;
+
+const CRITERES = {
+  score: ["Score", (p) => p.score, (p) => p.score.toLocaleString("fr-FR")],
+  chance: ["Chance", (p) => (p.chance == null ? -1 : p.chance), (p) => (p.chance == null ? "—" : p.chance + " %")],
+  boosters: ["Boosters", (p) => p.boosters, (p) => String(p.boosters)],
+  possedees: ["Cartes", (p) => p.possedees, (p) => `${p.possedees}/${p.total}`],
+  brillantes: ["Brillantes", (p) => p.brillantes, (p) => String(p.brillantes)],
+  arcs: ["Arc-en-ciel", (p) => p.arcs, (p) => String(p.arcs)],
+};
+let critere = "score";
+function trierProfils() {
+  const val = CRITERES[critere][1];
+  profils.sort((a, b) => val(b) - val(a) || b.score - a.score || String(a.pseudo).localeCompare(b.pseudo));
+}
+function dessinerListe() {
+  const liste = $("#cl-liste");
+  liste.replaceChildren();
+  if (!profils.length) liste.append(el("li", "sous", "Personne dans le classement pour l'instant."));
+  const [nomCrit, , format] = CRITERES[critere];
+  profils.forEach((p, i) => {
+    const li = el("li");
+    const b = el("button", "rang-ligne" + (p.uid === compte.uid ? " moi" : ""));
+    b.type = "button";
+    b.append(el("span", "rang-num", String(i + 1)), el("span", "rang-nom", p.pseudo),
+      el("span", "rang-det", critere === "score" ? `${p.possedees}/${p.total} cartes` : `Score ${p.score.toLocaleString("fr-FR")}`),
+      el("span", "rang-score", format(p)));
+    b.addEventListener("click", () => ouvrirProfil(p.uid));
+    li.append(b);
+    liste.append(li);
+  });
+}
+
+async function rendreClassement(pour) {
+  $("#cl-profil").hidden = true;
+  $("#cl-liste-zone").hidden = false;
+  profilOuvert = null;
+  const liste = $("#cl-liste");
+  liste.replaceChildren(el("li", "sous", "Chargement…"));
+  try {
+    if (aEnvoyer) await envoyer(false);
+    profils = await backend.listerClassement();
+  } catch (e) {
+    liste.replaceChildren(el("li", "sous", "Impossible de charger le classement : " + (e.message || e)));
+    return;
+  }
+  // mon profil est toujours à jour, même si l'envoi n'est pas encore passé
+  if (!estAdmin()) {
+    const moi = monProfil();
+    profils = profils.filter((p) => p.uid !== compte.uid);
+    profils.push({ ...moi, uid: compte.uid });
+  }
+  profils = profils.filter((p) => p.pseudo !== REGL.admin);
+  trierProfils();
+  $("#cl-note").textContent = backend.nom === "local"
+    ? "Mode sans serveur : seuls les comptes de cet appareil sont classés. Clique sur un joueur pour voir son profil."
+    : "Clique sur un joueur pour voir son profil et sa vitrine.";
+  dessinerListe();
+  if (pour) ouvrirProfil(pour);
+}
+
+function cartesVitrine(zone, vitrine) {
+  zone.replaceChildren();
+  for (let i = 0; i < 3; i++) {
+    const v = vitrine[i];
+    const c = v && CARTES.find((x) => x.id === v.id);
+    if (!c) { zone.append(el("div", "vide-case", "Case libre")); continue; }
+    const cont = el("div", "carte-fixe");
+    cont.dataset.r = rang(c);
+    const tilt = el("div", "tilt");
+    tilt.append(faceCarte(c, { finition: FINITIONS.includes(v.finition) ? v.finition : "normale" }));
+    cont.append(tilt);
+    activerInclinaison(cont);
+    zone.append(cont);
+  }
+}
+
+function ouvrirProfil(uid) {
+  const p = profils.find((x) => x.uid === uid);
+  if (!p) return;
+  profilOuvert = uid;
+  const moi = uid === compte.uid;
+  const zone = $("#cl-profil");
+  $("#cl-liste-zone").hidden = true;
+  zone.hidden = false;
+  zone.replaceChildren();
+
+  const retour = el("button", "btn second", "‹ Classement");
+  retour.type = "button";
+  retour.addEventListener("click", () => rendreClassement());
+  const place = [...profils].sort((a, b) => b.score - a.score).indexOf(p) + 1;
+  const tete = el("div", "profil-tete");
+  tete.append(retour, el("h2", "", p.pseudo + (moi ? " (toi)" : "")), el("span", "sous", `${place}${place === 1 ? "er" : "e"} sur ${profils.length}`));
+
+  const stats = el("div", "profil-stats");
+  const stat = (v, l) => { const d = el("div"); d.append(el("b", "", v), el("span", "", l)); stats.append(d); };
+  stat(p.score.toLocaleString("fr-FR"), "Score");
+  stat(`${p.possedees}/${p.total}`, "Cartes différentes");
+  stat(p.chance == null ? "—" : p.chance + " %", p.chance == null ? "Chance (il faut 5 boosters)" : "Chance aux boosters (100 % = moyenne)");
+  stat(String(p.boosters), "Boosters ouverts");
+  stat(String(p.brillantes), "Cartes brillantes");
+  stat(String(p.arcs), "Cartes arc-en-ciel");
+  const detail = el("p", "sous", REGL.ordre.map((n, r) => `${majuscule(n)} ${p.par_rarete[r]}`).join(" · "));
+
+  const vit = el("div", "vitrine");
+  cartesVitrine(vit, p.vitrine || []);
+  zone.append(tete, stats, detail, el("h3", "", "Vitrine"), vit);
+  if (!(p.vitrine || []).length) zone.append(el("p", "sous", moi ? "Ta vitrine est vide : choisis jusqu'à 3 cartes à montrer." : "Ce joueur n'a pas encore choisi de cartes."));
+
+  if (moi) {
+    const ouvrirChoix = el("button", "btn", "Choisir mes 3 cartes");
+    ouvrirChoix.type = "button";
+    const choix = el("div", "vit-choix");
+    choix.hidden = true;
+    ouvrirChoix.addEventListener("click", () => { choix.hidden = false; ouvrirChoix.hidden = true; preparerChoixVitrine(choix, vit); });
+    zone.append(ouvrirChoix, choix);
+  }
+}
+
+function preparerChoixVitrine(choix, vit) {
+  let sel = (etat.vitrine || []).map((v) => v.id);
+  choix.replaceChildren(el("p", "sous", "Touche des cartes de ta collection (3 au maximum), puis valide."));
+  const grille = el("div", "grille-choix");
+  const info = el("p", "sous");
+  const boutons = [];
+  const maj = () => {
+    info.textContent = `${sel.length} / 3 choisie${sel.length > 1 ? "s" : ""}`;
+    boutons.forEach(([b, c]) => b.setAttribute("aria-pressed", String(sel.includes(c.id))));
+  };
+  CARTES.filter((c) => (etat.collection[String(c.id)] || 0) > 0)
+    .sort((a, b) => rang(b) - rang(a) || a.id - b.id)
+    .forEach((c) => {
+      const b = el("button", "carte-fixe");
+      b.type = "button";
+      b.dataset.r = rang(c);
+      b.setAttribute("aria-label", `${c.nom}, ${c.rarete}`);
+      const tilt = el("div", "tilt");
+      tilt.append(faceCarte(c, { finition: meilleureFinition(c), paresseux: true }));
+      b.append(tilt);
+      b.addEventListener("click", () => {
+        if (sel.includes(c.id)) sel = sel.filter((x) => x !== c.id);
+        else if (sel.length < 3) sel.push(c.id);
+        maj();
+      });
+      boutons.push([b, c]);
+      grille.append(b);
+    });
+  const valider = el("button", "btn", "Valider ma vitrine");
+  valider.type = "button";
+  valider.addEventListener("click", () => {
+    etat.vitrine = sel.map((id) => ({ id, finition: meilleureFinition(CARTES.find((c) => c.id === id)) }));
+    sauvegarder();
+    const moi = profils.find((x) => x.uid === compte.uid);
+    if (moi) moi.vitrine = etat.vitrine;
+    ouvrirProfil(compte.uid);
+  });
+  const annuler = el("button", "btn second", "Annuler");
+  annuler.type = "button";
+  annuler.addEventListener("click", () => ouvrirProfil(compte.uid));
+  const actions = el("div", "actions");
+  actions.style.cssText = "justify-content:flex-start;min-height:0;margin:0";
+  actions.append(valider, annuler);
+  choix.append(info, grille, actions);
+  maj();
+}
+
+/* ---------- onglets ---------- */
+function onglet(nom, profilDe) {
+  for (const n of ["boosters", "collection", "classement", "boutique", "infos", "admin"]) {
+    $("#t-" + n).setAttribute("aria-selected", String(n === nom));
+    $("#v-" + n).hidden = n !== nom;
+  }
+  if (nom === "collection") majCollection();
+  if (nom === "classement") rendreClassement(profilDe);
+  if (nom === "boutique") { $("#boutique-msg").textContent = ""; rendreBoutique(); majRoue(); }
+  if (nom === "admin" && estAdmin()) rendreAdmin();
+}
+
+/* ---------- démarrage ---------- */
+async function texte(url) {
+  const r = await fetch(url, { cache: "no-cache" });  // revérifie à chaque visite : plus d'ancienne version gardée en mémoire
+  if (!r.ok) throw new Error(url + " : erreur " + r.status);
+  return r.text();
+}
+
+let profilPy = null, synchroPy = null, acheterPy = null, nouvelEtatPy = null, attentePy = null, roueurPy = null, codePy = null;
+let moteurPret = null;
+let modeConnexion = "connecter";
+let minuteurHorloge = null;
+
+async function chargerMoteur() {
+  const [cartesTxt, moteurSrc] = await Promise.all([texte("cartes.json"), texte("moteur.py")]);
+  CARTES_TXT = cartesTxt;
+  CARTES = JSON.parse(cartesTxt);
+  const pyodide = await loadPyodide();
+  pyodide.runPython(moteurSrc);
+  const g = (nom) => pyodide.globals.get(nom);
+  ouvrirPy = g("ouvrir_booster_web");
+  synchroPy = g("synchroniser_web");
+  acheterPy = g("acheter_web");
+  nouvelEtatPy = g("nouvel_etat_web");
+  attentePy = g("attente_web");
+  roueurPy = g("tourner_roue_web");
+  codePy = g("utiliser_code_web");
+  profilPy = g("profil_web");
+  REGL = JSON.parse(g("reglages_web")());
+
+  $("#pack-nb").textContent = pluriel(REGL.taille_booster, "carte", "cartes");
+  $("#pack-etoile").append(etoile());
+  const points = $("#pack-points");
+  REGL.ordre.forEach((_, r) => { const p = el("span"); p.dataset.r = r; points.append(p); });
+  rendreInfos();
+  dessinerRoue();
+}
+
+function erreurDemarrage(e) {
+  console.error(e);
+  const t = "Le jeu n'a pas pu démarrer (" + (e.message || e) + "). " +
+    "Ouvre la page depuis son adresse en ligne, ou en local avec « python -m http.server », pas en double-cliquant sur le fichier.";
+  $("#message").textContent = t;
+  $("#c-erreur").textContent = t;
+}
+
+function montrerConnexion(message) {
+  $("#ecran-connexion").hidden = false;
+  $("#c-erreur").textContent = message || "";
+  $("#c-mode").textContent = backend.nom === "local"
+    ? "Mode sans serveur : les comptes sont enregistrés dans ce navigateur seulement (voir LISEZMOI.md pour les comptes en ligne)."
+    : "";
+  choisirMode(modeConnexion);
+  $("#c-pseudo").focus();
+}
+
+function choisirMode(mode) {
+  modeConnexion = mode;
+  const ins = mode === "inscrire";
+  $("#c-connecter").setAttribute("aria-pressed", String(!ins));
+  $("#c-inscrire").setAttribute("aria-pressed", String(ins));
+  $("#c-connecter").setAttribute("aria-selected", String(!ins));
+  $("#c-inscrire").setAttribute("aria-selected", String(ins));
+  $("#c-valider").textContent = ins ? "Créer mon compte" : "Se connecter";
+  $("#c-mdp").autocomplete = ins ? "new-password" : "current-password";
+  $("#c-aide").textContent = ins
+    ? "Choisis un pseudo (3 à 20 caractères, sans espace) et un mot de passe de 6 caractères minimum. Pas besoin d'e-mail."
+    : "";
+  $("#c-erreur").textContent = "";
+}
+
+/* le joueur est connecté : on charge sa progression et on lance le jeu */
+async function entrer(session) {
+  await moteurPret;
+  compte = session;
+  const maintenant = Date.now();
+  let distant = null, enLigne = true;
+  try { distant = await backend.charger(); } catch (e) { enLigne = false; console.warn(e); }
+  const cache = lireJson(CLE_CACHE + session.uid);
+  if (!enLigne && !cache) {
+    compte = null;
+    throw new Error("Impossible de charger ta collection : pas de connexion au service de comptes. Réessaie dans un instant.");
+  }
+  let brut = distant;
+  if (cache && (!distant || (cache.maj || 0) > (distant.maj || 0))) brut = cache;
+  if (!brut) brut = JSON.parse(nouvelEtatPy(maintenant));
+  etat = JSON.parse(synchroPy(JSON.stringify(brut), maintenant));
+
+  $("#st-pseudo").textContent = session.pseudo;
+  $("#puce-compte").hidden = false;
+  phase = "pret";
+  sauvegarder();
+  majStats();
+  majCollection();
+  rendreBoutique();
+  for (const n of ["collection", "classement", "boutique", "infos"]) $("#t-" + n).disabled = false;
+  $("#t-admin").hidden = !estAdmin();
+  $("#t-admin").disabled = false;
+  majRoue();
+  autreBooster();
+  $("#ecran-connexion").hidden = true;
+  clearInterval(minuteurHorloge);
+  minuteurHorloge = setInterval(tictac, 1000);
+  if (!enLigne) afficherSauvegarde("Hors ligne : ta progression est gardée sur cet appareil et sera envoyée dès que possible.");
+}
+
+async function demarrer() {
+  try {
+    const cfg = window.FIREBASE_CONFIG;
+    backend = cfg && cfg.apiKey && cfg.projectId ? creerFirebase(cfg) : creerLocal();
+    moteurPret = chargerMoteur();
+    moteurPret.catch(erreurDemarrage);
+    let session = null, message = "";
+    try { session = await backend.reprendre(); } catch (e) { message = e.message; }
+    if (session) {
+      try { await entrer(session); return; } catch (e) { message = e.message || String(e); }
+    }
+    montrerConnexion(message);
+  } catch (e) {
+    erreurDemarrage(e);
+  }
+}
+
+/* quand on quitte l'onglet : on envoie tout de suite ; quand on revient : on regarde si un autre appareil a joué */
+async function rafraichirDepuisLeCompte() {
+  if (!compte || backend.nom !== "firebase" || envoiEnCours || aEnvoyer) return;
+  if (phase !== "pret" && phase !== "fini") return;
+  try {
+    const d = await backend.charger();
+    if (d && (d.maj || 0) > (etat.maj || 0) && !aEnvoyer && (phase === "pret" || phase === "fini")) {
+      etat = JSON.parse(synchroPy(JSON.stringify(d), Date.now()));
+      ecrire(CLE_CACHE + compte.uid, JSON.stringify(etat));
+      majStats(); majCollection(); rendreBoutique(); majBoutons();
+      if (phase === "pret") majMessage();
+    }
+  } catch (_) { /* hors ligne : on garde ce qu'on a */ }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) envoyer(true);
+  else if (compte) { tictac(); rafraichirDepuisLeCompte(); }
+});
+addEventListener("pagehide", () => envoyer(true));
+
+$("#c-connecter").addEventListener("click", () => choisirMode("connecter"));
+$("#c-inscrire").addEventListener("click", () => choisirMode("inscrire"));
+$("#form-connexion").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const erreur = $("#c-erreur");
+  const pseudo = $("#c-pseudo").value, mdp = $("#c-mdp").value;
+  const probleme = verifierPseudo(pseudo);
+  if (probleme) { erreur.textContent = probleme; return; }
+  if (modeConnexion === "inscrire" && mdp.length < 6) { erreur.textContent = "Mot de passe trop court : 6 caractères minimum."; return; }
+  erreur.textContent = "";
+  const bouton = $("#c-valider");
+  const libelle = bouton.textContent;
+  bouton.disabled = true;
+  bouton.textContent = "Un instant…";
+  try {
+    const session = modeConnexion === "inscrire" ? await backend.inscrire(pseudo, mdp) : await backend.connecter(pseudo, mdp);
+    await entrer(session);
+    $("#c-mdp").value = "";
+  } catch (err) {
+    erreur.textContent = err.message || String(err);
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = libelle;
+  }
+});
+
+$("#pack").addEventListener("click", () => ouvrirIsole("normal"));
+$("#btn-ur").addEventListener("click", () => ouvrirIsole("ur"));
+$("#btn-principal").addEventListener("click", avancer);
+$("#btn-passer").addEventListener("click", passer);
+$("#btn-autre").addEventListener("click", suite);
+$("#roue-btn").addEventListener("click", tournerRoue);
+$("#form-code").addEventListener("submit", validerCode);
+$("#form-admin-code").addEventListener("submit", enregistrerCode);
+$("#t-admin").addEventListener("click", () => onglet("admin"));
+$("#ad-normal").addEventListener("click", () => adminOuvrir(["libre"]));
+$("#ad-ur").addEventListener("click", () => adminOuvrir(["libre_ur"]));
+$("#ad-dix").addEventListener("click", () => adminOuvrir(Array(10).fill("libre")));
+$("#t-boosters").addEventListener("click", () => onglet("boosters"));
+$("#t-collection").addEventListener("click", () => onglet("collection"));
+function colonnes(n) {
+  $("#grille").style.setProperty("--cols", n);
+  document.querySelectorAll(".coll-cols button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.n === String(n))));
+}
+let nbCols = 4;
+try { nbCols = Number(localStorage.getItem("boosters-colonnes")) || 4; } catch (_) { /* stockage indisponible */ }
+colonnes(nbCols);
+document.querySelectorAll(".coll-cols button").forEach((b) => b.addEventListener("click", () => {
+  nbCols = Number(b.dataset.n); colonnes(nbCols);
+  try { localStorage.setItem("boosters-colonnes", String(nbCols)); } catch (_) { /* tant pis */ }
+}));
+$("#coll-tri").addEventListener("change", (e) => { triColl = e.target.value; majCollection(); });
+$("#coll-serie").addEventListener("change", (e) => { serieColl = e.target.value; majCollection(); });
+$("#t-classement").addEventListener("click", () => onglet("classement"));
+$("#cl-tri").addEventListener("change", (e) => { critere = e.target.value; trierProfils(); dessinerListe(); });
+const versMonProfil = () => { if (compte && !estAdmin() && phase !== "reveal") onglet("classement", compte.uid); };
+$("#puce-compte").addEventListener("click", versMonProfil);
+$("#puce-compte").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); versMonProfil(); } });
+$("#t-boutique").addEventListener("click", () => onglet("boutique"));
+$("#t-infos").addEventListener("click", () => onglet("infos"));
+$("#zoom-fermer").addEventListener("click", () => $("#zoom").close());
+$("#zoom-prec").addEventListener("click", () => naviguerZoom(-1));
+$("#zoom-suiv").addEventListener("click", () => naviguerZoom(1));
+$("#zoom").addEventListener("click", (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$("#zoom").addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft") naviguerZoom(-1);
+  else if (e.key === "ArrowRight") naviguerZoom(1);
+});
+$("#zoom").addEventListener("close", () => { if (declencheurZoom && declencheurZoom.isConnected) declencheurZoom.focus({ preventScroll: true }); });
+$("#deconnexion").addEventListener("click", async () => {
+  await envoyer(false);
+  backend.deconnecter();
+  location.reload();
+});
+$("#reset").addEventListener("click", () => {
+  if (phase === "chargement" || !compte) return;
+  if (!confirm("Effacer toute ta collection, tes pièces et tes boosters, et repartir de zéro ?")) return;
+  etat = JSON.parse(nouvelEtatPy(Date.now()));
+  gainRestant = 0;
+  sauvegarder();
+  majStats();
+  majCollection();
+  rendreBoutique();
+  if (phase !== "ouverture") autreBooster();
+});
+
+demarrer();
+</script>
+</body>
+</html>
