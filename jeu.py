@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 from moteur import (BOUTIQUE, INTERVALLE_SECONDES, ORDRE, STOCK_MAX, acheter, boosters_disponibles,
-                    etat_initial, ouvrir_booster, synchroniser)
+                    etat_initial, ouvrir_booster, synchroniser, vendre_tous)
 
 DOSSIER = Path(__file__).parent
 FICHIER_CARTES = DOSSIER / "cartes.json"
@@ -51,7 +51,9 @@ def afficher_carte(carte):
     if carte["nouvelle_finition"]:
         marque = "  ✨ NOUVELLE FINITION"
     fin = f"  {FINITIONS[carte['finition']]}" if carte["finition"] in FINITIONS else ""
-    gain = f"  +{carte['pieces']} pièces" if carte["pieces"] else ""
+    gain = f"  (doublon, {carte['valeur']} pièces si tu le vends)" if carte.get("doublon") else ""
+    if carte.get("revelation"):
+        gain = f"  👻 fantôme {carte['revelation']['apres']}/{carte['revelation']['requis']}"
     print(f"  {SYMBOLES[carte['rarete']]} {carte['nom']}  [{carte['rarete']}]{fin}{marque}{gain}")
 
 
@@ -95,7 +97,8 @@ def main():
         print("3. Boutique")
         print("4. Voir ma collection")
         print("5. Statistiques")
-        print("6. Quitter")
+        print("6. Vendre tous mes doublons")
+        print("7. Quitter")
         try:
             choix = input("> ").strip()
         except EOFError:
@@ -117,6 +120,9 @@ def main():
         elif choix == "5":
             afficher_stats(etat)
         elif choix == "6":
+            gain, vendus = vendre_tous(etat, cartes)
+            print(f"{vendus} doublons vendus : +{gain} pièces." if vendus else "Pas de doublon à vendre.")
+        elif choix == "7":
             break
         sauvegarder(etat)
 

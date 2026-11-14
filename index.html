@@ -390,6 +390,93 @@ button.carte-fixe { cursor: pointer; }
 .classement { max-width: 640px; margin: 0 auto; }
 .groupe-titre { grid-column: 1 / -1; margin: 18px 0 2px; padding-bottom: 6px; border-bottom: 1px solid var(--trait); font-size: 16px; color: var(--doux); }
 .groupe-titre:first-child { margin-top: 4px; }
+/* niveaux : les cartes s'embellissent quand on dépense des doublons */
+@keyframes n-monte { 0% { transform: translateY(0) scale(.6); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(-62cqw) scale(1); opacity: 0; } }
+@keyframes n-tourne-rayons { to { transform: rotate(360deg); } }
+@keyframes n-respire { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+@keyframes n-flux { to { background-position: 300% 0; } }
+@keyframes n-gemme { 50% { filter: brightness(1.7) drop-shadow(0 0 2cqw var(--c-clair)); } }
+@keyframes n-lueur { 50% { opacity: .55; } }
+
+.niv-parts { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+.niv-parts i { position: absolute; bottom: -4cqw; width: var(--t); height: var(--t); border-radius: 50%; background: var(--c-clair);
+  box-shadow: 0 0 2cqw .6cqw var(--c); opacity: 0; animation: n-monte var(--d) linear var(--w) infinite; }
+.recto[data-r="2"] .niv-parts i, .recto[data-r="4"] .niv-parts i, .recto[data-r="5"] .niv-parts i { border-radius: 0; transform: rotate(45deg); }
+.recto[data-r="3"] .niv-parts i { background: #ffd08a; box-shadow: 0 0 2.4cqw .8cqw #ff5a30; }
+.recto[data-r="4"] .niv-parts i { background: #fff6c4; box-shadow: 0 0 2.4cqw .8cqw #ffc02e; }
+
+/* lumière derrière l'illustration */
+.niv-rayons { position: absolute; left: 50%; top: 42%; width: 190%; aspect-ratio: 1; margin: -95% 0 0 -95%; pointer-events: none; z-index: 0; mix-blend-mode: screen; opacity: .0;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c-clair) 70%, transparent) 0 6deg, transparent 6deg 22deg);
+  -webkit-mask: radial-gradient(circle, #000 4%, transparent 62%); mask: radial-gradient(circle, #000 4%, transparent 62%);
+  animation: n-tourne-rayons 26s linear infinite, n-lueur 4s ease-in-out infinite; }
+.recto[data-n="3"] .niv-rayons { opacity: .34; }
+.recto[data-n="4"] .niv-rayons { opacity: .65; animation-duration: 14s, 3s; }
+.recto[data-n="4"] .art img, .recto[data-n="4"] .art.sans-image { animation: n-respire 5s ease-in-out infinite; }
+
+/* cadre : de plus en plus épais, de plus en plus travaillé */
+.niv-ring { position: absolute; inset: .9cqw; border-radius: 6.2cqw; pointer-events: none; padding: var(--e, 1.4cqw);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude; }
+.recto[data-n="2"] .niv-ring { --e: 1.7cqw; background: linear-gradient(150deg, var(--c-clair), var(--c-fonce) 50%, var(--c-clair)); }
+.recto[data-n="3"] .niv-ring { --e: 2.4cqw; background: repeating-linear-gradient(115deg, var(--c-clair) 0, var(--c) 6cqw, var(--c-fonce) 10cqw, var(--c) 14cqw, var(--c-clair) 20cqw) 0 0 / 300% 100%; animation: n-flux 6s linear infinite; }
+.recto[data-n="4"] .niv-ring { --e: 3cqw; background: conic-gradient(from var(--ang), var(--c-clair), #fff 12%, var(--c) 30%, var(--c-fonce) 50%, var(--c) 70%, #fff 88%, var(--c-clair)); animation: tourne 5s linear infinite; }
+.recto[data-n="2"] .ext, .recto[data-n="3"] .ext, .recto[data-n="4"] .ext { box-shadow: 0 0 5cqw color-mix(in srgb, var(--c) 45%, transparent), 0 1.5cqw 5cqw rgba(0,0,0,.55); }
+.recto[data-n="4"] .ext { box-shadow: 0 0 9cqw 1cqw color-mix(in srgb, var(--c) 80%, transparent), 0 1.5cqw 5cqw rgba(0,0,0,.55); }
+.niv-fil { position: absolute; inset: 4.2cqw; border-radius: 3.6cqw; border: .5cqw solid color-mix(in srgb, var(--c-clair) 60%, transparent); pointer-events: none; z-index: 3; }
+
+/* gemmes aux coins */
+.niv-gem { position: absolute; width: 7.5cqw; height: 7.5cqw; transform: rotate(45deg); z-index: 5; pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--c-clair) 35%, var(--c-fonce) 90%); border: .5cqw solid rgba(255,255,255,.75); box-shadow: 0 0 2.4cqw var(--c); }
+.niv-gem.a { top: -1cqw; left: -1cqw; } .niv-gem.b { top: -1cqw; right: -1cqw; } .niv-gem.c { bottom: -1cqw; left: -1cqw; } .niv-gem.d { bottom: -1cqw; right: -1cqw; }
+.recto[data-n="4"] .niv-gem { width: 9.5cqw; height: 9.5cqw; animation: n-gemme 2.2s ease-in-out infinite; }
+
+/* pastille de niveau */
+.niv-pastille { position: absolute; top: 18cqw; left: 5cqw; z-index: 4; padding: .15em .6em; border-radius: 3cqw; font-size: 7.6cqw; line-height: 1.2; letter-spacing: .06em; font-style: italic;
+  color: #10131c; background: linear-gradient(150deg, var(--c-clair), var(--c)); box-shadow: 0 0 2.4cqw var(--c); }
+.recto[data-n="4"] .niv-pastille { background: linear-gradient(100deg, #fff, var(--c-clair), #fff, var(--c-clair)) 0 0 / 300% 100%; animation: n-flux 3s linear infinite; }
+
+/* le nom suit */
+.recto[data-n="2"][data-r="0"] .nom, .recto[data-n="2"][data-r="1"] .nom { text-shadow: 0 0 2.4cqw var(--c), 0 .4cqw .8cqw rgba(0,0,0,.6); }
+.recto[data-n="3"][data-r="0"] .nom, .recto[data-n="3"][data-r="1"] .nom, .recto[data-n="4"][data-r="0"] .nom, .recto[data-n="4"][data-r="1"] .nom { color: var(--c-clair); text-shadow: 0 0 3cqw var(--c), 0 0 6cqw var(--c), 0 .4cqw .8cqw rgba(0,0,0,.6); letter-spacing: .04em; }
+.recto[data-n="3"] .trait, .recto[data-n="4"] .trait { height: 1.8cqw; background: linear-gradient(90deg, var(--c-clair), var(--c), transparent); box-shadow: 0 0 2cqw var(--c); }
+
+/* finitions */
+.recto[data-f="arc"][data-n="2"] .niv-ring, .recto[data-f="arc"][data-n="3"] .niv-ring { background: linear-gradient(135deg, #ff7ad9, #ffe36b, #8ef0a3, #6fd0ff, #a58bff, #ff7ad9) 0 0 / 300% 100%; }
+.recto[data-f="arc"][data-n="4"] .niv-ring { background: conic-gradient(from var(--ang), #ff7ad9, #ffe36b, #8ef0a3, #6fd0ff, #a58bff, #ff7ad9); }
+.recto[data-f="arc"][data-n] .niv-parts i { background: #fff; box-shadow: 0 0 2cqw .6cqw #ff7ad9, 0 0 3cqw 1cqw #6fd0ff; }
+.recto[data-f="arc"][data-n] .niv-rayons { background: repeating-conic-gradient(from 0deg, rgba(255,122,217,.7) 0 5deg, rgba(255,227,107,.7) 5deg 10deg, rgba(142,240,163,.7) 10deg 15deg, rgba(111,208,255,.7) 15deg 20deg, transparent 20deg 30deg); }
+.recto[data-f="brillante"][data-n] .niv-parts i { background: #fff; box-shadow: 0 0 2.4cqw 1cqw #fff; }
+.recto[data-f="brillante"][data-n] .niv-pastille { background: #fff; }
+
+/* cartes fantômes : l'image se révèle en mosaïque */
+.art canvas.fant { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.recto.fantome .ext { filter: saturate(calc(.25 + var(--rev, 0) * .75)); }
+.art.fantome-art img { display: none; }
+.recto.fantome .ombre { opacity: calc(.6 + var(--rev, 0) * .4); }
+.fant-pastille { position: absolute; top: 18cqw; left: 5cqw; z-index: 4; padding: .15em .65em; border-radius: 3cqw; font-size: 7cqw; line-height: 1.25; letter-spacing: .06em; font-style: italic;
+  color: #e9f1ff; background: rgba(16, 24, 38, .78); border: .4cqw solid rgba(255,255,255,.35); text-transform: uppercase; }
+.recto.fantome[data-rev="100"] .fant-pastille { background: linear-gradient(150deg, var(--c-clair), var(--c)); color: #10131c; border-color: transparent; }
+.fant-compte { position: absolute; left: 6cqw; bottom: 3.2cqw; font-size: 5.6cqw; letter-spacing: .08em; color: rgba(255,255,255,.7); z-index: 4; font-style: normal; }
+
+.grille .niv-parts, .vitrine .niv-parts { display: none; }
+.grille .niv-rayons, .vitrine .niv-rayons { animation: none; }
+.grille .recto[data-n="4"] .art img, .vitrine .recto[data-n="4"] .art img { animation: none; }
+.coll-doublons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 14px 0 0; padding: 12px 16px; border: 1px solid var(--trait); border-radius: 14px; background: var(--panneau); font-size: 14.5px; }
+.coll-doublons p { margin: 0; flex: 1 1 240px; color: var(--doux); }
+.zoom-actions { margin: 0 0 14px; }
+.zoom-actions p { margin: 0 0 10px; }
+.zoom-actions .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.zoom-actions .btn { padding: 9px 14px; font-size: 14px; }
+.zoom-actions .msg { color: var(--texte); min-height: 1.2em; }
+.niv-barre { display: flex; gap: 5px; margin: 0 0 10px; }
+.niv-barre i { flex: 1; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, .14); }
+.niv-barre i.on { background: linear-gradient(90deg, var(--c-clair, #fff), var(--c, #fff)); box-shadow: 0 0 8px var(--c, #fff); }
+
+.am-resume { margin-top: 14px; font-size: 14.5px; }
+.table-masse { border-collapse: collapse; margin: 8px 0; }
+.table-masse td { padding: 3px 18px 3px 0; }
+.table-masse td:last-child { font-variant-numeric: tabular-nums; font-weight: 700; }
 .coll-outils { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 4px; }
 .tri { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--doux); font-size: 14px; }
 .tri select { flex: 0 1 240px; padding: 9px 12px; }
@@ -538,6 +625,7 @@ footer p { margin: 0; }
 .coll-cols button[aria-pressed="true"] { background: rgba(255, 255, 255, .14); color: #fff; border-color: rgba(255, 255, 255, .4); }
 @media (prefers-reduced-motion: reduce) {
   .recto:not(.manquante) .nom { animation: none !important; }
+  .niv-parts, .niv-rayons { display: none !important; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 </style>
@@ -610,6 +698,10 @@ footer p { margin: 0; }
         </div>
       </div>
       <div class="jauge large"><span id="coll-jauge"></span></div>
+      <div class="coll-doublons" id="coll-doublons">
+        <p id="coll-doublons-txt"></p>
+        <button type="button" class="btn second" id="btn-vendre-tout">Vendre tous les doublons</button>
+      </div>
       <div class="filtres" id="filtres" role="group" aria-label="Filtrer par rareté"></div>
       <div class="filtres statut" id="filtres-statut" role="group" aria-label="Filtrer par état"></div>
       <div class="coll-outils">
@@ -703,6 +795,18 @@ footer p { margin: 0; }
           </div>
         </div>
         <div class="panneau">
+          <h3>Ouverture en masse</h3>
+          <p>Ouvre beaucoup de boosters d'un coup et affiche un résumé, sans les animations. Respecte la case « Mode test » ci-dessus.</p>
+          <div class="admin-form" style="margin-bottom:10px">
+            <label>Nombre<input class="champ" id="am-nb" type="number" min="1" max="5000" value="1000"></label>
+            <label>Type
+              <select class="champ" id="am-type"><option value="libre_ur">Ultra rare garanti</option><option value="libre">Normal</option></select>
+            </label>
+          </div>
+          <button type="button" class="btn" id="am-go">Ouvrir en masse</button>
+          <div id="am-res" aria-live="polite"></div>
+        </div>
+        <div class="panneau">
           <h3>Codes de la boutique</h3>
           <p>Un code donne une récompense, une seule fois par joueur. Écris-le en minuscules, sans espace (lettres, chiffres, - et _).
             Pour changer un code, enregistre-le à nouveau avec le même nom.</p>
@@ -741,7 +845,7 @@ footer p { margin: 0; }
       <h3 id="zoom-nom"></h3>
       <p class="sous" id="zoom-details"></p>
       <div class="zoom-fins" id="zoom-fins" role="group" aria-label="Finition"></div>
-      <p id="zoom-valeur"></p>
+      <div class="zoom-actions" id="zoom-actions"></div>
       <div class="zoom-nav">
         <button type="button" class="btn second" id="zoom-prec">‹ Précédente</button>
         <button type="button" class="btn second" id="zoom-suiv">Suivante ›</button>
@@ -1098,6 +1202,111 @@ async function envoyer(keepalive) {
   }
 }
 
+/* ---------- niveaux, doublons et cartes fantômes ---------- */
+const idDe = (c) => String(c.id);
+const niveauDe = (c) => (etat.niveaux && etat.niveaux[idDe(c)]) || 1;
+const copiesDe = (c) => etat.collection[idDe(c)] || 0;
+function infoFantome(c) {  // {k, requis} tant qu'une carte fantôme n'est pas entièrement révélée
+  if (!c.fantome) return null;
+  const k = copiesDe(c), requis = REGL.requis_fantome[rang(c)];
+  return k < requis ? { k, requis } : null;
+}
+const pRevele = (k, requis) => (k <= 0 ? 0 : requis <= 1 ? 1 : Math.min(1, 0.15 + 0.85 * (k - 1) / (requis - 1)));
+const valeurVente = (r, f) => Math.max(1, Math.floor(REGL.valeurs[r] * (REGL.bonus[f] || 1) + 0.5));
+function stockDe(c) {  // les doublons en stock : {normale, brillante, arc-en-ciel, total, valeur, premiere}
+  const s = (etat.doublons && etat.doublons[idDe(c)]) || {};
+  const r = rang(c);
+  const out = { total: 0, valeur: 0, premiere: 0 };
+  let premiere = null;
+  for (const f of FINITIONS) {
+    out[f] = s[f] || 0;
+    out.total += out[f];
+    out.valeur += out[f] * valeurVente(r, f);
+    if (premiere === null && out[f] > 0) premiere = valeurVente(r, f);
+  }
+  out.premiere = premiere || 0;
+  return out;
+}
+
+const COLS_M = 25, LIG_M = 35, NB_TUILES = COLS_M * LIG_M;
+const ordresTuiles = new Map();
+function ordreTuiles(id) {  // l'ordre dans lequel les carreaux se révèlent : toujours le même pour une carte
+  if (!ordresTuiles.has(id)) {
+    let graine = (id * 2654435761) >>> 0;
+    const alea = () => (graine = (Math.imul(graine, 1664525) + 1013904223) >>> 0) / 4294967296;
+    const o = [...Array(NB_TUILES).keys()];
+    for (let i = NB_TUILES - 1; i > 0; i--) { const j = Math.floor(alea() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+    const rg = new Array(NB_TUILES);
+    o.forEach((t, i) => (rg[t] = i));
+    ordresTuiles.set(id, rg);
+  }
+  return ordresTuiles.get(id);
+}
+function dessinerMosaique(cv, c, img, p) {
+  const W = cv.width, H = cv.height, g = cv.getContext("2d"), rg = ordreTuiles(c.id);
+  const vus = p * NB_TUILES, tw = W / COLS_M, th = H / LIG_M;
+  g.clearRect(0, 0, W, H);
+  if (img && img.complete && img.naturalWidth) {
+    const s = Math.max(W / img.naturalWidth, H / img.naturalHeight), iw = img.naturalWidth * s, ih = img.naturalHeight * s;
+    g.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
+  } else { g.fillStyle = "#26364d"; g.fillRect(0, 0, W, H); }
+  for (let t = 0; t < NB_TUILES; t++) {
+    const x = (t % COLS_M) * tw, y = Math.floor(t / COLS_M) * th, r = rg[t];
+    if (r >= vus) { g.fillStyle = ((t % COLS_M) + Math.floor(t / COLS_M)) % 2 ? "#121c2c" : "#0f1826"; g.fillRect(x, y, tw + .5, th + .5); }
+    else if (p < 0.999) {
+      const frais = 1 - (vus - r) / (NB_TUILES * 0.07);  // les carreaux qui viennent d'apparaître brillent un instant
+      if (frais > 0) { g.fillStyle = `rgba(255,255,255,${(frais * 0.85).toFixed(2)})`; g.fillRect(x, y, tw + .5, th + .5); }
+    }
+  }
+  const a = Math.max(0, 0.35 * (1 - p * 1.6));  // un petit fantôme en filigrane tant qu'il reste peu d'image
+  if (a > 0) {
+    g.save(); g.globalAlpha = a; g.fillStyle = "#bcd4ff";
+    const cx = W / 2, cy = H * 0.44, r = W * 0.2;
+    g.beginPath(); g.arc(cx, cy, r, Math.PI, 0); g.lineTo(cx + r, cy + r * 1.5);
+    for (let k = 0; k < 4; k++) g.quadraticCurveTo(cx + r - (k + 0.5) * r / 2, cy + r * 1.1, cx + r - (k + 1) * r / 2, cy + r * 1.5);
+    g.closePath(); g.fill(); g.globalCompositeOperation = "destination-out"; g.beginPath();
+    g.arc(cx - r * 0.38, cy - r * 0.1, r * 0.17, 0, 7); g.arc(cx + r * 0.38, cy - r * 0.1, r * 0.17, 0, 7); g.fill(); g.restore();
+  }
+}
+function majFantome(f, p, k, requis) {
+  f.style.setProperty("--rev", p);
+  const pas = f.querySelector(".fant-pastille"), cpt = f.querySelector(".fant-compte");
+  if (pas) pas.textContent = p >= 0.999 ? "Révélée" : "Fantôme " + Math.round(p * 100) + " %";
+  if (cpt) cpt.textContent = k + " / " + requis;
+  f.dataset.rev = Math.round(p * 100);
+}
+function animerFantome(f) {  // à l'ouverture d'un booster : les nouveaux carreaux apparaissent
+  const d = f._fan;
+  if (!d || d.fait) return;
+  d.fait = true;
+  const fin = () => { dessinerMosaique(d.cv, d.c, d.img, d.p1); majFantome(f, d.p1, d.k1, d.requis); };
+  if (reduit || d.p1 === d.p0) return fin();
+  const t0 = performance.now(), duree = 1400;
+  const pas = (t) => {
+    const u = Math.min(1, (t - t0) / duree), e = u * u * (3 - 2 * u), p = d.p0 + (d.p1 - d.p0) * e;
+    dessinerMosaique(d.cv, d.c, d.img, p);
+    majFantome(f, p, u < 0.5 ? d.k0 : d.k1, d.requis);
+    if (u < 1) requestAnimationFrame(pas); else fin();
+  };
+  requestAnimationFrame(pas);
+}
+function ajouterNiveau(f, n) {  // l'allure d'une carte qui a monté de niveau
+  f.dataset.n = n;
+  const int = f.querySelector(".int"), ext = f.querySelector(".ext");
+  int.insertBefore(el("div", "niv-rayons"), int.querySelector(".ombre"));
+  const parts = el("div", "niv-parts");
+  const nb = n === 2 ? 5 : n === 3 ? 10 : 18;
+  for (let i = 0; i < nb; i++) {
+    const p = document.createElement("i");
+    p.style.cssText = `left:${6 + Math.random() * 88}%;--t:${(1.6 + Math.random() * 2.2).toFixed(1)}cqw;--d:${(3.2 + Math.random() * 3).toFixed(1)}s;--w:-${(Math.random() * 6).toFixed(1)}s`;
+    parts.append(p);
+  }
+  int.insertBefore(parts, int.querySelector(".code"));
+  int.append(el("div", "niv-fil"), el("span", "niv-pastille", n >= REGL.niveau_max ? "MAX" : "NIV. " + n));
+  ext.append(el("div", "niv-ring"));
+  if (n >= 3) for (const k of "abcd") ext.append(el("div", "niv-gem " + k));
+}
+
 /* le profil public : pseudo, score, stats et vitrine (jamais les points de chaque carte) */
 function monProfil() {
   return { pseudo: compte.pseudo, ...JSON.parse(profilPy(JSON.stringify(etat), CARTES_TXT)) };
@@ -1142,9 +1351,25 @@ function faceCarte(c, o = {}) {
   const int = el("div", "int");
 
   const art = el("div", "art");
+  const fan = o.manquante ? null : o.fantome;
   if (o.manquante) {
     art.classList.add("sans-image");
     art.append(el("span", "grand", "?"));
+  } else if (fan) {
+    f.classList.add("fantome");
+    art.classList.add("fantome-art");
+    const cv = el("canvas", "fant");
+    cv.width = 250; cv.height = 350;
+    const img = new Image();
+    const p0 = pRevele(fan.avant !== undefined ? fan.avant : fan.k, fan.requis), p1 = pRevele(fan.k, fan.requis);
+    const dessiner = () => dessinerMosaique(cv, c, img, f._fan && f._fan.fait ? f._fan.p1 : p0);
+    img.addEventListener("load", dessiner);
+    img.addEventListener("error", dessiner);
+    img.src = c.image;
+    dessiner();
+    art.append(cv);
+    f._fan = { cv, c, img, p0, p1, k0: fan.avant !== undefined ? fan.avant : fan.k, k1: fan.k, requis: fan.requis, fait: false };
+    if (fan.avant === undefined) f._fan.fait = true;  // pas d'animation (collection, zoom…) : on affiche directement le palier
   } else {
     const img = new Image();
     img.alt = "";
@@ -1171,16 +1396,23 @@ function faceCarte(c, o = {}) {
   nom.style.fontSize = (c.nom.length > 16 ? 9.5 : c.nom.length > 11 ? 12 : 15) + "cqw";
   bas.append(nom);
   int.append(bas, el("i", "trait"), etoile());
+  if (fan) {
+    int.append(el("span", "fant-pastille"), el("i", "fant-compte"));
+    majFantome(f, pRevele(fan.avant !== undefined ? fan.avant : fan.k, fan.requis), fan.avant !== undefined ? fan.avant : fan.k, fan.requis);
+  }
 
   ext.append(int);
   if (r >= 4 && !o.manquante) ext.append(el("div", "reflet"));
   if (secrete) f.append(el("span", "aura"));
   f.append(ext);
+  if (!fan && !o.manquante && (o.niveau || 1) > 1) ajouterNiveau(f, Math.min(o.niveau, REGL.niveau_max));
 
   if (o.nouvelle) f.append(el("span", "badge", "Nouvelle"));
   else if (o.nouvelleFinition) f.append(el("span", "badge", "Nouvelle finition"));
   if (o.nb > 1) f.append(el("span", "badge nb", "×" + o.nb));
-  if (o.pieces > 0) f.append(el("span", "badge gain", "+" + pluriel(o.pieces, "pièce", "pièces")));
+  if (fan && fan.avant !== undefined) f.append(el("span", "badge gain", "Fantôme " + fan.k + "/" + fan.requis));
+  else if (o.doublon) f.append(el("span", "badge gain", "Doublon"));
+  if (f._fan && f._fan.fait) dessinerMosaique(f._fan.cv, f._fan.c, f._fan.img, f._fan.p1);
   return f;
 }
 
@@ -1224,6 +1456,13 @@ function ambiance(r) {  // la lumière derrière la scène prend la couleur de l
   else s.style.setProperty("--amb", `var(--rc${r})`);
 }
 
+function optionsTirage(c) {  // ce qu'il faut savoir pour dessiner une carte qui vient d'être tirée
+  return {
+    nouvelle: c.nouvelle, nouvelleFinition: c.nouvelle_finition, finition: c.finition, doublon: c.doublon,
+    niveau: niveauDe(c), fantome: c.revelation ? { k: c.revelation.apres, avant: c.revelation.avant, requis: c.revelation.requis } : null,
+  };
+}
+
 function carteBooster(c, i) {
   const b = el("button", "carte entre");
   b.type = "button";
@@ -1231,7 +1470,7 @@ function carteBooster(c, i) {
   b.setAttribute("aria-label", `Carte ${i + 1} sur ${tirage.length}, face cachée. Retourner.`);
   const tilt = el("span", "tilt");
   const flip = el("span", "flip");
-  flip.append(versoCarte(), faceCarte(c, { nouvelle: c.nouvelle, nouvelleFinition: c.nouvelle_finition, finition: c.finition, pieces: c.pieces }));
+  flip.append(versoCarte(), faceCarte(c, optionsTirage(c)));
   tilt.append(flip);
   b.append(tilt);
   b.addEventListener("click", avancer);
@@ -1322,15 +1561,19 @@ function majMessage() {
     if (!retournee) m.textContent = debut + "Clique sur la carte pour la retourner.";
     else if (c.nouvelle) m.textContent = debut + "Nouvelle carte !";
     else if (c.nouvelle_finition) m.textContent = debut + "Tu ne l'avais pas dans cette finition !";
-    else m.textContent = debut + `Un doublon : +${pluriel(c.pieces, "pièce", "pièces")}.`;
+    else if (c.revelation) {
+      const pct = Math.round(pRevele(c.revelation.apres, c.revelation.requis) * 100);
+      m.textContent = debut + `Carte fantôme : ${c.revelation.apres} / ${c.revelation.requis} exemplaires, ${pct} % révélée` + (c.revelation.apres >= c.revelation.requis ? " ! Elle est complète." : ".");
+    } else if (c.doublon) m.textContent = debut + "Un doublon : il va dans ton stock, à vendre ou à utiliser pour améliorer une carte.";
+    else m.textContent = debut;
   } else if (phase === "fini") {
     const n = tirage.filter((c) => c.nouvelle).length;
     let t = n ? `${pluriel(n, "nouvelle carte", "nouvelles cartes")} dans ce booster.` : "Que des doublons dans ce booster.";
     if (tirage.some((c) => c.rarete === "secrète")) t += " UNE CARTE SECRÈTE !";
     else if (tirage.some((c) => c.finition === "arc-en-ciel")) t += " Une carte arc-en-ciel !";
     else if (tirage.some((c) => c.finition === "brillante")) t += " Une carte brillante !";
-    const gain = tirage.reduce((s, c) => s + (c.pieces || 0), 0);
-    if (gain > 0) t += ` Tes doublons rapportent ${pluriel(gain, "pièce", "pièces")}.`;
+    const dbl = tirage.filter((c) => c.doublon).length;
+    if (dbl > 0) t += ` ${pluriel(dbl, "doublon", "doublons")} à vendre ou à utiliser pour améliorer tes cartes (onglet Collection).`;
     if (dernierTest) t += " Mode test : rien n'est enregistré.";
     if (garantieDeclenchee) t += ` La garantie s'est déclenchée : une carte ${REGL.pitie_rarete} ou mieux t'était réservée.`;
     m.textContent = t;
@@ -1404,6 +1647,7 @@ function retournerCourante() {
   if (r === 5) revelationSecrete();
   else if (c.finition === "arc-en-ciel") flash("#ffffff");
   else if (r >= 3) flash(`var(--rc${r})`);
+  if (c.revelation) setTimeout(() => { const f = $("#courante .recto"); if (f) animerFantome(f); }, 450);
   majProgression();
   majBoutons();
   majMessage();
@@ -1432,7 +1676,9 @@ function carteResume(c, i) {
   conteneur.dataset.r = rang(c);
   conteneur.style.setProperty("--delai", i * 90 + "ms");
   const tilt = el("div", "tilt");
-  tilt.append(faceCarte(c, { nouvelle: c.nouvelle, nouvelleFinition: c.nouvelle_finition, finition: c.finition, pieces: c.pieces }));
+  const opt = optionsTirage(c);
+  if (opt.fantome) delete opt.fantome.avant;  // le résumé montre directement le palier atteint
+  tilt.append(faceCarte(c, opt));
   conteneur.append(tilt);
   activerInclinaison(conteneur);
   return conteneur;
@@ -1821,6 +2067,41 @@ async function enregistrerCode(e) {
   rendreAdmin();
 }
 
+function ouvrirEnMasse() {
+  if (phase !== "pret" && phase !== "fini") return;
+  const zone = $("#am-res");
+  const nb = Math.max(1, Math.min(5000, Math.floor(Number($("#am-nb").value) || 0)));
+  const mode = $("#am-type").value;
+  const test = $("#admin-test").checked;
+  $("#am-go").disabled = true;
+  zone.textContent = "Tirage en cours…";
+  setTimeout(() => {  // laisse le temps d'afficher le message avant le calcul
+    try {
+      const res = JSON.parse(massePy(CARTES_TXT, JSON.stringify(etat), Date.now(), mode, nb));
+      if (!test) { etat = res.etat; sauvegarder(); majStats(); majCollection(); }
+      const bloc = el("div", "am-resume");
+      bloc.append(el("p", "", `${pluriel(res.nombre, "booster ouvert", "boosters ouverts")} (${res.cartes} cartes)${test ? " — mode test : rien n'est enregistré" : ""}.`));
+      const tab = el("table", "table-masse");
+      REGL.ordre.forEach((n, r) => {
+        const tr = el("tr"); tr.append(el("td", "", majuscule(n)), el("td", "", String(res.par_rarete[r]))); tab.append(tr);
+      });
+      bloc.append(tab);
+      bloc.append(el("p", "", `${res.finitions.brillante} brillantes · ${res.finitions["arc-en-ciel"]} arc-en-ciel · ${res.nouvelles} nouvelles cartes · ${pluriel(res.doublons, "doublon", "doublons")} (${res.pieces} pièces si tu les vends)${test ? " — rien n'est gardé" : ""}`));
+      const top = res.meilleures.map((m) => ({ ...m, c: CARTES.find((x) => x.id === m.id) })).filter((m) => m.c)
+        .sort((a, b) => rang(b.c) - rang(a.c) || (b.finition !== "normale") - (a.finition !== "normale") || a.c.id - b.c.id);
+      const lourd = top.filter((m) => rang(m.c) >= 4 || m.finition === "arc-en-ciel");
+      if (lourd.length) bloc.append(el("p", "", "Les plus belles : " + lourd.slice(0, 25).map((m) =>
+        `${m.c.nom}${m.finition === "normale" ? "" : " (" + NOMS_FIN[m.finition].toLowerCase() + ")"}${m.nb > 1 ? " ×" + m.nb : ""}`).join(", ") + (lourd.length > 25 ? "…" : "")));
+      zone.replaceChildren(bloc);
+    } catch (e) {
+      console.error(e);
+      zone.textContent = "Le tirage a échoué : " + (e.message || e);
+    }
+    $("#am-go").disabled = false;
+  }, 30);
+}
+$("#am-go").addEventListener("click", ouvrirEnMasse);
+
 function adminOuvrir(modes) {
   adminTest = $("#admin-test").checked;
   lancerFile(modes);
@@ -1846,6 +2127,12 @@ function majCollection() {
   $("#t-compte").textContent = `${possedees}/${CARTES.length}`;
   $("#coll-titre").textContent = `${possedees} cartes sur ${CARTES.length}`;
   $("#coll-finitions").textContent = `${pluriel(brillantes, "carte brillante", "cartes brillantes")} · ${pluriel(arcs, "carte arc-en-ciel", "cartes arc-en-ciel")}`;
+  let nbD = 0, valD = 0;
+  for (const c of CARTES) { const st = stockDe(c); nbD += st.total; valD += st.valeur; }
+  $("#coll-doublons-txt").textContent = nbD
+    ? `${pluriel(nbD, "doublon", "doublons")} en stock (${valD} pièces si tu les vends tous). Ouvre une carte pour l'améliorer ou en vendre.`
+    : "Tu n'as aucun doublon en stock. Les cartes que tu tires en double arrivent ici : tu peux les vendre ou les utiliser pour améliorer tes cartes.";
+  $("#btn-vendre-tout").disabled = !nbD;
   $("#coll-jauge").style.width = (CARTES.length ? (possedees / CARTES.length) * 100 : 0) + "%";
 
   const pastille = (conteneur, libelle, actif, action, r) => {
@@ -1916,7 +2203,7 @@ function majCollection() {
     const conteneur = el(n ? "button" : "div", "carte-fixe");
     conteneur.dataset.r = rang(c);
     const tilt = el("div", "tilt");
-    tilt.append(faceCarte(c, { manquante: n === 0, nb: n, finition: meilleureFinition(c), paresseux: true }));
+    tilt.append(faceCarte(c, { manquante: n === 0, nb: n, finition: meilleureFinition(c), paresseux: true, niveau: niveauDe(c), fantome: infoFantome(c) }));
     conteneur.append(tilt);
     if (n === 0) {
       conteneur.setAttribute("aria-label", `Carte n° ${c.id}, pas encore trouvée`);
@@ -1953,7 +2240,7 @@ function rendreZoom() {
   const cont = el("div", "carte-fixe");
   cont.dataset.r = rang(c);
   const tilt = el("div", "tilt");
-  tilt.append(faceCarte(c, { finition: finZoom }));
+  tilt.append(faceCarte(c, { finition: finZoom, niveau: niveauDe(c), fantome: infoFantome(c) }));
   cont.append(tilt);
   activerInclinaison(cont);
   $("#zoom-carte").replaceChildren(cont);
@@ -1972,11 +2259,54 @@ function rendreZoom() {
     fins.append(b);
   }
 
-  const r = rang(c);
-  const valeur = Math.floor(REGL.valeurs[r] * (REGL.bonus[finZoom] || 1) + 0.5);
-  $("#zoom-valeur").textContent = `Un doublon de cette carte en version ${finZoom === "normale" ? "normale" : NOMS_FIN[finZoom].toLowerCase()} rapporte ${pluriel(valeur, "pièce", "pièces")}.`;
+  actionsZoom(c);
   $("#zoom-prec").disabled = listeZoom.length < 2;
   $("#zoom-suiv").disabled = listeZoom.length < 2;
+}
+
+function actionsZoom(c) {
+  const z = $("#zoom-actions");
+  z.replaceChildren();
+  const fan = infoFantome(c);
+  if (fan) {
+    z.append(el("p", "", `Carte fantôme : ${fan.k} / ${fan.requis} exemplaires. Chaque exemplaire que tu tires révèle une part de l'image.`));
+    return;
+  }
+  const r = rang(c), niv = niveauDe(c), max = REGL.niveau_max, stock = stockDe(c);
+  const cout = niv >= max ? null : REGL.couts_niveau[r][niv - 1];
+  const barre = el("div", "niv-barre");
+  for (let i = 1; i <= max; i++) barre.append(el("i", i <= niv ? "on" : ""));
+  const msg = el("p", "msg");
+  msg.setAttribute("aria-live", "polite");
+  z.append(barre, el("p", "", niv >= max ? "Niveau maximum !" : `Niveau ${niv} sur ${max}. Prochain niveau : ${pluriel(cout, "doublon", "doublons")}.`),
+    el("p", "", stock.total ? `Tu as ${pluriel(stock.total, "doublon", "doublons")} de cette carte.` : "Tu n'as pas de doublon de cette carte."));
+  const btns = el("div", "btns");
+  const agir = async (fonction, args, texte) => {
+    const res = JSON.parse(fonction(...args));
+    etat = res.etat;
+    if (res.erreur) { msg.textContent = res.erreur; return; }
+    sauvegarder(); majStats(); majPieces(); majCollection(); rendreZoom();
+    $("#zoom-actions .msg").textContent = texte(res);
+  };
+  if (cout !== null) {
+    const b = el("button", "btn", `Améliorer · ${pluriel(cout, "doublon", "doublons")}`);
+    b.type = "button"; b.disabled = stock.total < cout;
+    b.addEventListener("click", () => agir(ameliorerPy, [JSON.stringify(etat), CARTES_TXT, c.id], (res) => `Niveau ${res.niveau} atteint !`));
+    btns.append(b);
+  }
+  if (stock.total > 0) {
+    const v1 = el("button", "btn second", `Vendre 1 · +${stock.premiere}`);
+    v1.type = "button";
+    v1.addEventListener("click", () => agir(ventePy, [JSON.stringify(etat), CARTES_TXT, c.id, 1], (res) => `+${pluriel(res.gain, "pièce", "pièces")}.`));
+    btns.append(v1);
+    if (stock.total > 1) {
+      const vt = el("button", "btn second", `Tout vendre · +${stock.valeur}`);
+      vt.type = "button";
+      vt.addEventListener("click", () => agir(ventePy, [JSON.stringify(etat), CARTES_TXT, c.id, 0], (res) => `+${pluriel(res.gain, "pièce", "pièces")}.`));
+      btns.append(vt);
+    }
+  }
+  z.append(btns, msg);
 }
 
 function naviguerZoom(sens) {
@@ -2056,11 +2386,18 @@ function rendreInfos() {
       tableau(["Offre", "Prix", "Contenu"], offres)),
   );
   infos.children[1].append(
-    bloc("Pièces gagnées avec un doublon", "Plus la carte est rare, plus elle rapporte, et les finitions rapportent un peu plus.",
+    bloc("Vendre un doublon", "Un doublon est une carte que tu as déjà. Il reste en stock : tu peux le vendre (plus la carte est rare, plus elle rapporte, et les finitions rapportent un peu plus) ou l'utiliser pour améliorer une carte.",
       tableau(["Rareté", "Normale", "Brillante", "Arc-en-ciel"], valeurs)),
     bloc("Finitions", `Chaque carte tirée peut être brillante (${uneSur(REGL.chance_brillante)}) ou arc-en-ciel (${uneSur(REGL.chance_arc)}), quelle que soit sa rareté. ` +
       "La brillante a un reflet blanc qui balaie la carte. L'arc-en-ciel a un cadre et des reflets multicolores, d'autant plus marqués que la carte est rare."),
   );
+  const nbFant = CARTES.filter((c) => c.fantome).length;
+  infos.append(
+    bloc("Niveaux", `Dépense des doublons d'une carte pour la faire monter jusqu'au niveau ${REGL.niveau_max} : son cadre et ses effets deviennent de plus en plus marqués. Nombre de doublons à dépenser pour passer chaque niveau.`,
+      tableau(["Rareté", "Niveau 2", "Niveau 3", "Niveau max"], REGL.ordre.map((nom, r) => ({ r, cellules: [majuscule(nom), ...REGL.couts_niveau[r].map(String)] })))),
+  );
+  if (nbFant) infos.append(bloc("Cartes fantômes", `Certaines cartes (${nbFant} dans le jeu) sont des fantômes : quand tu les tires, on ne voit presque rien. Chaque exemplaire révèle une part de l'image, jusqu'à ce que tu aies tous les exemplaires. Un fantôme est révélé plus vite si sa rareté est élevée.`,
+    tableau(["Rareté", "Exemplaires pour tout révéler"], REGL.ordre.map((nom, r) => ({ r, cellules: [majuscule(nom), String(REGL.requis_fantome[r])] })))));
   const multis = REGL.roue.filter((g) => g.multi).map((g) => `×${g.multi} : un booster toutes les ${dureeTxt(REGL.intervalle_ms / g.multi)}`);
   infos.append(bloc("Roue de la chance", `Un tour par jour, remis à zéro à minuit. Les multiplicateurs accélèrent tes boosters gratuits pendant ${Math.round(REGL.multi_duree_ms / 60000)} minutes (${multis.join(" ; ")}).`,
     tableau(["Récompense", "Chance"], REGL.roue.map((g) => ({ r: "", cellules: [g.texte, pourcent(g.poids / 100)] })))));
@@ -2141,7 +2478,7 @@ function cartesVitrine(zone, vitrine) {
     const cont = el("div", "carte-fixe");
     cont.dataset.r = rang(c);
     const tilt = el("div", "tilt");
-    tilt.append(faceCarte(c, { finition: FINITIONS.includes(v.finition) ? v.finition : "normale" }));
+    tilt.append(faceCarte(c, { finition: FINITIONS.includes(v.finition) ? v.finition : "normale", niveau: v.niveau || 1 }));
     cont.append(tilt);
     activerInclinaison(cont);
     zone.append(cont);
@@ -2173,6 +2510,8 @@ function ouvrirProfil(uid) {
   stat(String(p.boosters), "Boosters ouverts");
   stat(String(p.brillantes), "Cartes brillantes");
   stat(String(p.arcs), "Cartes arc-en-ciel");
+  if (p.fantomes_total) stat(`${p.fantomes}/${p.fantomes_total}`, "Cartes fantômes révélées");
+  stat(String(p.niveau_max || 0), "Cartes au niveau max");
   const detail = el("p", "sous", REGL.ordre.map((n, r) => `${majuscule(n)} ${p.par_rarete[r]}`).join(" · "));
 
   const vit = el("div", "vitrine");
@@ -2200,7 +2539,7 @@ function preparerChoixVitrine(choix, vit) {
     info.textContent = `${sel.length} / 3 choisie${sel.length > 1 ? "s" : ""}`;
     boutons.forEach(([b, c]) => b.setAttribute("aria-pressed", String(sel.includes(c.id))));
   };
-  CARTES.filter((c) => (etat.collection[String(c.id)] || 0) > 0)
+  CARTES.filter((c) => (etat.collection[String(c.id)] || 0) > 0 && !infoFantome(c))
     .sort((a, b) => rang(b) - rang(a) || a.id - b.id)
     .forEach((c) => {
       const b = el("button", "carte-fixe");
@@ -2208,7 +2547,7 @@ function preparerChoixVitrine(choix, vit) {
       b.dataset.r = rang(c);
       b.setAttribute("aria-label", `${c.nom}, ${c.rarete}`);
       const tilt = el("div", "tilt");
-      tilt.append(faceCarte(c, { finition: meilleureFinition(c), paresseux: true }));
+      tilt.append(faceCarte(c, { finition: meilleureFinition(c), paresseux: true, niveau: niveauDe(c) }));
       b.append(tilt);
       b.addEventListener("click", () => {
         if (sel.includes(c.id)) sel = sel.filter((x) => x !== c.id);
@@ -2256,7 +2595,7 @@ async function texte(url) {
   return r.text();
 }
 
-let profilPy = null, synchroPy = null, acheterPy = null, nouvelEtatPy = null, attentePy = null, roueurPy = null, codePy = null;
+let ventePy = null, venteToutPy = null, ameliorerPy = null, massePy = null, profilPy = null, synchroPy = null, acheterPy = null, nouvelEtatPy = null, attentePy = null, roueurPy = null, codePy = null;
 let moteurPret = null;
 let modeConnexion = "connecter";
 let minuteurHorloge = null;
@@ -2276,6 +2615,10 @@ async function chargerMoteur() {
   roueurPy = g("tourner_roue_web");
   codePy = g("utiliser_code_web");
   profilPy = g("profil_web");
+  massePy = g("ouvrir_masse_web");
+  ventePy = g("vendre_web");
+  venteToutPy = g("vendre_tous_web");
+  ameliorerPy = g("ameliorer_web");
   REGL = JSON.parse(g("reglages_web")());
 
   $("#pack-nb").textContent = pluriel(REGL.taille_booster, "carte", "cartes");
@@ -2442,6 +2785,13 @@ document.querySelectorAll(".coll-cols button").forEach((b) => b.addEventListener
   nbCols = Number(b.dataset.n); colonnes(nbCols);
   try { localStorage.setItem("boosters-colonnes", String(nbCols)); } catch (_) { /* tant pis */ }
 }));
+$("#btn-vendre-tout").addEventListener("click", () => {
+  let nbD = 0, valD = 0;
+  for (const c of CARTES) { const st = stockDe(c); nbD += st.total; valD += st.valeur; }
+  if (!nbD || !confirm(`Vendre ${nbD} doublons pour ${valD} pièces ? Tu ne pourras plus les utiliser pour améliorer tes cartes.`)) return;
+  const res = JSON.parse(venteToutPy(JSON.stringify(etat), CARTES_TXT));
+  etat = res.etat; sauvegarder(); majStats(); majPieces(); majCollection();
+});
 $("#coll-tri").addEventListener("change", (e) => { triColl = e.target.value; majCollection(); });
 $("#coll-serie").addEventListener("change", (e) => { serieColl = e.target.value; majCollection(); });
 $("#t-classement").addEventListener("click", () => onglet("classement"));
