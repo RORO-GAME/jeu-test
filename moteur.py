@@ -156,15 +156,15 @@ def etat_initial(maintenant=0):
     # roue_jour  : le jour (texte) où la roue a été tournée pour la dernière fois
     # codes_utilises : les codes déjà utilisés
     # stat_boosters, stat_points, stat_attendu : boosters ouverts (hors tests/admin), points tirés, points qu'on en attendait en moyenne ("chance")
-    # doublons   : exemplaires en stock, à vendre ou à dépenser : {id: {"normale": n, "brillante": n, "arc-en-ciel": n}}
-    # retires    : {id: {"normale": n, ...}} exemplaires vendus ou dépensés (le score, lui, ne baisse jamais)
+    # inv        : exemplaires qu'on possède encore : {id: {"normale": n, "brillante": n, "arc-en-ciel": n}}
+    #              (la collection, elle, compte tout ce qu'on a obtenu : le score ne baisse jamais quand on vend)
     # vitrine    : jusqu'à 3 cartes montrées sur le profil : [{"id": 12, "finition": "brillante"}, ...]
     return {
         "collection": {}, "finitions": {}, "monnaie": 0, "boosters_ouverts": 0, "sans_rare": 0,
         "stock": BOOSTERS_DEPART, "horloge": int(maintenant), "progres": 0.0, "achetes": 0, "achetes_ur": 0,
         "multi": None, "roue_jour": "", "codes_utilises": [],
         "stat_boosters": 0, "stat_points": 0, "stat_attendu": 0.0, "vitrine": [],
-        "doublons": {}, "retires": {},
+        "inv": {},
     }
 
 
@@ -361,25 +361,73 @@ def _carte(cartes, carte_id):
     raise ValueError("Carte inconnue.")
 
 
-def nb_doublons(etat, carte_id):
-    stock = etat.get("doublons", {}).get(str(carte_id), {})
-    return sum(stock.get(f, 0) for f in _FINS)
+def _requis(carte):
+    """Exemplaires qu'on garde toujours pour une carte : 1, ou le nombre qui révèle une carte fantôme."""
+    return REQUIS_FANTOME[carte["rarete"]] if carte.get("fantome") else 1
 
 
-def exemplaires_possedes(etat, carte_id):
-    """Exemplaires que le joueur a encore, par finition : {"normale": n, "brillante": n, "arc-en-ciel": n}."""
-    cle = str(carte_id)
+def _inv(etat, carte):
+    """Les exemplaires possédés d'une carte, par finition (créés à partir d'une ancienne sauvegarde si besoin)."""
+    cle = str(carte["id"])
+    inv = etat.setdefault("inv", {})
+    if cle in inv:
+        return inv[cle]
     n = etat.get("collection", {}).get(cle, 0)
     f = etat.get("finitions", {}).get(cle, {})
     b, a = f.get("brillante", 0), f.get("arc-en-ciel", 0)
-    r = etat.get("retires", {}).get(cle, {})
     brut = {"normale": max(n - b - a, 0), "brillante": b, "arc-en-ciel": a}
-    return {fin: max(brut[fin] - r.get(fin, 0), 0) for fin in _FINS}
+    # ancienne sauvegarde : on ne garde que ce qui comptait vraiment (1 exemplaire + les doublons en stock)
+    ancien = etat.get("doublons", {}).get(cle, {})
+    total = min(n, _requis(carte) + sum(ancien.get(x, 0) for x in _FINS))
+    inv[cle] = {x: 0 for x in _FINS}
+    for fin in reversed(_FINS):          # on garde en priorité les meilleures finitions
+        pris = min(brut[fin], total)
+        inv[cle][fin] = pris
+        total -= pris
+    return inv[cle]
 
 
-def meilleure_finition(etat, carte_id):
-    p = exemplaires_possedes(etat, carte_id)
-    return "arc-en-ciel" if p["arc-en-ciel"] > 0 else "brillante" if p["brillante"] > 0 else "normale"
+def normaliser(etat, cartes):
+    """Met à jour une ancienne sauvegarde (inventaire des exemplaires). Sans danger si c'est déjà fait."""
+    for c in cartes:
+        if etat.get("collection", {}).get(str(c["id"]), 0) > 0:
+            _inv(etat, c)
+    etat.pop("doublons", None)
+    etat.pop("retires", None)
+    etat.pop("niveaux", None)
+    return etat
+
+
+def _copies(inv):
+    """La liste des exemplaires, du mieux fini au moins bien fini."""
+    return [f for f in reversed(_FINS) for _ in range(inv.get(f, 0))]
+
+
+def a_vendre(etat, carte):
+    """Exemplaires vendables (les moins bien finis) : on garde toujours le mieux fini, et les copies d'un fantôme."""
+    copies = _copies(_inv(etat, carte))
+    return copies[_requis(carte):]
+
+
+def nb_doublons(etat, carte):
+    return len(a_vendre(etat, carte))
+
+
+def exemplaires_possedes(etat, carte):
+    """Ce qu'on voit dans la collection, par finition (les copies qui ont servi à révéler un fantôme ne comptent pas)."""
+    copies = _copies(_inv(etat, carte))
+    cache = copies[1:_requis(carte)]
+    vus = {f: 0 for f in _FINS}
+    for f in copies:
+        vus[f] += 1
+    for f in cache:
+        vus[f] -= 1
+    return vus
+
+
+def meilleure_finition(etat, carte):
+    copies = _copies(_inv(etat, carte))
+    return copies[0] if copies else "normale"
 
 
 def fantome_revelee(etat, carte):
@@ -389,31 +437,26 @@ def fantome_revelee(etat, carte):
     return etat.get("collection", {}).get(str(carte["id"]), 0) >= REQUIS_FANTOME[carte["rarete"]]
 
 
-def _retirer_doublons(etat, carte_id, nombre):
-    """Retire `nombre` doublons, en commençant par les moins précieux. Renvoie la liste des finitions retirées."""
-    stock = etat.setdefault("doublons", {}).setdefault(str(carte_id), {})
+def _retirer(etat, carte, nombre):
+    """Retire `nombre` exemplaires vendables, en commençant par les moins bien finis. Renvoie leurs finitions."""
+    inv = _inv(etat, carte)
     retires = []
+    nombre = min(nombre, nb_doublons(etat, carte))
     for f in _FINS:
-        while nombre > 0 and stock.get(f, 0) > 0:
-            stock[f] -= 1
+        while len(retires) < nombre and inv[f] > 0:
+            inv[f] -= 1
             retires.append(f)
-            nombre -= 1
-    if not any(stock.values()):
-        etat["doublons"].pop(str(carte_id), None)
-    r = etat.setdefault("retires", {}).setdefault(str(carte_id), {})
-    for f in retires:
-        r[f] = r.get(f, 0) + 1
     return retires
 
 
 def vendre(etat, cartes, carte_id, nombre=None):
     """Vend `nombre` doublons de la carte (tous si None). Renvoie les pièces gagnées."""
     c = _carte(cartes, carte_id)
-    dispo = nb_doublons(etat, carte_id)
+    dispo = nb_doublons(etat, c)
     if dispo <= 0:
         raise ValueError("Tu n'as pas de doublon de cette carte.")
     nombre = dispo if nombre is None else max(1, min(int(nombre), dispo))
-    gain = sum(valeur_vente(c["rarete"], f) for f in _retirer_doublons(etat, carte_id, nombre))
+    gain = sum(valeur_vente(c["rarete"], f) for f in _retirer(etat, c, nombre))
     etat["monnaie"] = etat.get("monnaie", 0) + gain
     return gain
 
@@ -421,12 +464,12 @@ def vendre(etat, cartes, carte_id, nombre=None):
 def vendre_tous(etat, cartes):
     """Vend tous les doublons de toutes les cartes. Renvoie (pièces gagnées, nombre de doublons vendus)."""
     gain = vendus = 0
-    for cle in list(etat.get("doublons", {})):
-        carte_id = int(cle)
-        n = nb_doublons(etat, carte_id)
-        if n > 0:
-            gain += vendre(etat, cartes, carte_id, n)
-            vendus += n
+    for c in cartes:
+        if etat.get("collection", {}).get(str(c["id"]), 0) > 0:
+            n = nb_doublons(etat, c)
+            if n > 0:
+                gain += vendre(etat, cartes, c["id"], n)
+                vendus += n
     return gain, vendus
 
 
@@ -445,17 +488,20 @@ def ameliorer(etat, cartes, carte_id):
         raise ValueError("Tu n'as pas cette carte.")
     if not fantome_revelee(etat, c):
         raise ValueError("Cette carte fantôme n'est pas encore entièrement révélée.")
-    actuelle = meilleure_finition(etat, carte_id)
+    actuelle = meilleure_finition(etat, c)
     cout = cout_amelioration(c["rarete"], actuelle)
     if cout is None:
         raise ValueError("Cette carte est déjà arc-en-ciel.")
-    if nb_doublons(etat, carte_id) < cout:
+    if nb_doublons(etat, c) < cout:
         raise ValueError(f"Il te faut {cout} doublons pour améliorer cette carte.")
-    _retirer_doublons(etat, carte_id, cout)
+    _retirer(etat, c, cout)
     nouvelle = _FINS[_FINS.index(actuelle) + 1]
+    inv = _inv(etat, c)
+    inv[actuelle] -= 1
+    inv[nouvelle] += 1                    # le meilleur exemplaire change de finition
     f = etat.setdefault("finitions", {}).setdefault(cle, {})
     if actuelle != "normale":
-        f[actuelle] = max(f.get(actuelle, 0) - 1, 0)   # l'exemplaire change de finition
+        f[actuelle] = max(f.get(actuelle, 0) - 1, 0)
     f[nouvelle] = f.get(nouvelle, 0) + 1
     return nouvelle
 
@@ -506,7 +552,7 @@ def tirer_booster(cartes, etat, mode="normal"):
     - "finition" : "normale", "brillante" ou "arc-en-ciel"
     - "nouvelle" : True si le joueur ne possédait pas encore cette carte
     - "nouvelle_finition" : True si la carte est déjà possédée mais pas dans cette finition
-    - "doublon" : True si l'exemplaire est un doublon (il part dans le stock de doublons)
+    - "doublon" : True si l'exemplaire est un doublon (un exemplaire en plus, qu'on peut vendre)
     - "valeur" : pièces qu'on aurait en vendant ce doublon ; "pieces" vaut toujours 0 (rien n'est vendu tout seul)
     - "revelation" : pour une carte fantôme qui se révèle : {"avant": k, "apres": k+1, "requis": n}
     """
@@ -536,7 +582,6 @@ def tirer_booster(cartes, etat, mode="normal"):
     tirage.sort(key=lambda c: ORDRE.index(c["rarete"]))
 
     # finitions, et quelles cartes sont nouvelles (un doublon dans le même booster ne l'est pas)
-    etat.setdefault("doublons", {})
     deja = set(etat["collection"])
     copies = dict(etat["collection"])
     finitions_vues = {cle: set(v) for cle, v in etat["finitions"].items()}
@@ -574,10 +619,9 @@ def tirer_booster(cartes, etat, mode="normal"):
         etat["stat_points"] = etat.get("stat_points", 0) + sum(points_carte(c["rarete"], c["finition"]) for c in resultat)
     for c in resultat:
         cle = str(c["id"])
+        inv = _inv(etat, c)               # avant d'ajouter la carte à la collection (sert à migrer une ancienne sauvegarde)
         etat["collection"][cle] = etat["collection"].get(cle, 0) + 1
-        if c["doublon"]:
-            stock = etat["doublons"].setdefault(cle, {})
-            stock[c["finition"]] = stock.get(c["finition"], 0) + 1
+        inv[c["finition"]] += 1
         if c["finition"] != "normale":
             f = etat["finitions"].setdefault(cle, {})
             f[c["finition"]] = f.get(c["finition"], 0) + 1
@@ -620,6 +664,10 @@ def reglages_web():
 
 def nouvel_etat_web(maintenant):
     return json.dumps(etat_initial(maintenant), ensure_ascii=False)
+
+
+def normaliser_web(etat_json, cartes_json):
+    return json.dumps(normaliser(json.loads(etat_json), json.loads(cartes_json)), ensure_ascii=False)
 
 
 def synchroniser_web(etat_json, maintenant):
@@ -739,12 +787,11 @@ def calculer_profil(etat, cartes):
     vitrine = []
     for v in etat.get("vitrine", [])[:3]:
         cle = str(v.get("id"))
-        f = etat.get("finitions", {}).get(cle, {})
         fin = v.get("finition", "normale")
-        if fin != "normale" and f.get(fin, 0) <= 0:
-            fin = meilleure_finition(etat, v.get("id"))   # la finition choisie n'existe plus (carte améliorée ou vendue)
         carte = par_id.get(v.get("id"))
-        if carte and etat.get("collection", {}).get(cle, 0) > 0 and fantome_revelee(etat, carte) and (fin == "normale" or f.get(fin, 0) > 0):
+        if carte and etat.get("collection", {}).get(cle, 0) > 0 and fantome_revelee(etat, carte):
+            if fin not in _FINS or exemplaires_possedes(etat, carte)[fin] <= 0:
+                fin = meilleure_finition(etat, carte)   # la finition choisie n'existe plus (carte améliorée ou vendue)
             vitrine.append({"id": v["id"], "finition": fin})
     fantomes = [c for c in cartes if c.get("fantome")]
     return {

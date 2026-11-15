@@ -1146,18 +1146,21 @@ function infoFantome(c) {  // {k, requis} tant qu'une carte fantôme n'est pas e
 }
 const pRevele = (k, requis) => (k <= 0 ? 0 : requis <= 1 ? 1 : Math.min(1, 0.15 + 0.85 * (k - 1) / (requis - 1)));
 const valeurVente = (r, f) => Math.max(1, Math.floor(REGL.valeurs[r] * (REGL.bonus[f] || 1) + 0.5));
-function stockDe(c) {  // les doublons en stock : {normale, brillante, arc-en-ciel, total, valeur, premiere}
-  const s = (etat.doublons && etat.doublons[idDe(c)]) || {};
+const FIN_ORDRE = ["arc-en-ciel", "brillante", "normale"];   // du mieux fini au moins bien fini
+const requisDe = (c) => (c.fantome ? REGL.requis_fantome[rang(c)] : 1);
+function copiesTriees(c) {  // les exemplaires qu'on possède, du mieux fini au moins bien fini
+  const inv = (etat.inv && etat.inv[idDe(c)]) || {};
+  const l = [];
+  for (const f of FIN_ORDRE) for (let i = 0; i < (inv[f] || 0); i++) l.push(f);
+  return l;
+}
+function stockDe(c) {  // les doublons vendables (on garde toujours le mieux fini) : {normale, brillante, arc-en-ciel, total, valeur, premiere}
+  const vend = copiesTriees(c).slice(requisDe(c));
   const r = rang(c);
-  const out = { total: 0, valeur: 0, premiere: 0 };
-  let premiere = null;
-  for (const f of FINITIONS) {
-    out[f] = s[f] || 0;
-    out.total += out[f];
-    out.valeur += out[f] * valeurVente(r, f);
-    if (premiere === null && out[f] > 0) premiere = valeurVente(r, f);
-  }
-  out.premiere = premiere || 0;
+  const out = { "normale": 0, "brillante": 0, "arc-en-ciel": 0, total: vend.length, valeur: 0, premiere: 0 };
+  for (const f of vend) { out[f]++; out.valeur += valeurVente(r, f); }
+  const pire = vend[vend.length - 1];
+  out.premiere = pire ? valeurVente(r, pire) : 0;
   return out;
 }
 
@@ -1665,7 +1668,7 @@ function majReserve(a) {
 
 /* le temps passe : un booster gratuit de plus toutes les 15 minutes */
 function synchroniser() {
-  etat = JSON.parse(synchroPy(JSON.stringify(etat), Date.now()));
+  etat = synchro(etat, Date.now());
   sauvegarder();
   majStats();
   majPack();
@@ -2023,21 +2026,13 @@ function adminOuvrir(modes) {
 }
 
 /* ---------- collection ---------- */
-const exemplaires = (c) => {  // ce qu'on possède encore (les exemplaires vendus ou dépensés ne comptent plus)
-  const n = etat.collection[String(c.id)] || 0;
-  const f = (etat.finitions && etat.finitions[String(c.id)]) || {};
-  const r = (etat.retires && etat.retires[String(c.id)]) || {};
-  const b = f["brillante"] || 0, a = f["arc-en-ciel"] || 0;
-  const out = { "normale": Math.max(Math.max(n - b - a, 0) - (r["normale"] || 0), 0),
-    "brillante": Math.max(b - (r["brillante"] || 0), 0), "arc-en-ciel": Math.max(a - (r["arc-en-ciel"] || 0), 0) };
-  out.total = out["normale"] + out["brillante"] + out["arc-en-ciel"];
-  if (n > 0 && out.total === 0) out["normale"] = out.total = 1;
+const exemplaires = (c) => {  // ce qu'on voit : les exemplaires utilisables (les copies qui ont servi à révéler un fantôme ne comptent pas)
+  const l = copiesTriees(c);
+  const out = { "normale": 0, "brillante": 0, "arc-en-ciel": 0, total: 0 };
+  l.forEach((f, i) => { if (i === 0 || i >= requisDe(c)) { out[f]++; out.total++; } });
   return out;
 };
-const meilleureFinition = (c) => {
-  const e = exemplaires(c);
-  return e["arc-en-ciel"] > 0 ? "arc-en-ciel" : e["brillante"] > 0 ? "brillante" : "normale";
-};
+const meilleureFinition = (c) => copiesTriees(c)[0] || "normale";
 
 function majCollection() {
   const nb = (c) => ((etat.collection[String(c.id)] || 0) > 0 ? exemplaires(c).total : 0);
@@ -2516,7 +2511,11 @@ async function texte(url) {
   return r.text();
 }
 
-let ventePy = null, venteToutPy = null, ameliorerPy = null, massePy = null, profilPy = null, synchroPy = null, acheterPy = null, nouvelEtatPy = null, attentePy = null, roueurPy = null, codePy = null;
+function synchro(e, t) {  // temps qui passe + mise à niveau d'une ancienne sauvegarde (inventaire des exemplaires)
+  const r = JSON.parse(synchroPy(JSON.stringify(e), t));
+  return normaliserPy && CARTES_TXT ? JSON.parse(normaliserPy(JSON.stringify(r), CARTES_TXT)) : r;
+}
+let normaliserPy = null, ventePy = null, venteToutPy = null, ameliorerPy = null, massePy = null, profilPy = null, synchroPy = null, acheterPy = null, nouvelEtatPy = null, attentePy = null, roueurPy = null, codePy = null;
 let moteurPret = null;
 let modeConnexion = "connecter";
 let minuteurHorloge = null;
@@ -2530,6 +2529,7 @@ async function chargerMoteur() {
   const g = (nom) => pyodide.globals.get(nom);
   ouvrirPy = g("ouvrir_booster_web");
   synchroPy = g("synchroniser_web");
+  normaliserPy = g("normaliser_web");
   acheterPy = g("acheter_web");
   nouvelEtatPy = g("nouvel_etat_web");
   attentePy = g("attente_web");
@@ -2598,7 +2598,7 @@ async function entrer(session) {
   let brut = distant;
   if (cache && (!distant || (cache.maj || 0) > (distant.maj || 0))) brut = cache;
   if (!brut) brut = JSON.parse(nouvelEtatPy(maintenant));
-  etat = JSON.parse(synchroPy(JSON.stringify(brut), maintenant));
+  etat = synchro(brut, maintenant);
 
   $("#st-pseudo").textContent = session.pseudo;
   $("#puce-compte").hidden = false;
@@ -2642,7 +2642,7 @@ async function rafraichirDepuisLeCompte() {
   try {
     const d = await backend.charger();
     if (d && (d.maj || 0) > (etat.maj || 0) && !aEnvoyer && (phase === "pret" || phase === "fini")) {
-      etat = JSON.parse(synchroPy(JSON.stringify(d), Date.now()));
+      etat = synchro(d, Date.now());
       ecrire(CLE_CACHE + compte.uid, JSON.stringify(etat));
       majStats(); majCollection(); rendreBoutique(); majBoutons();
       if (phase === "pret") majMessage();
