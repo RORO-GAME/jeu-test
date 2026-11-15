@@ -61,7 +61,7 @@ VALEUR_DOUBLON = {
 BONUS_FINITION = {"normale": 1, "brillante": 1.5, "arc-en-ciel": 2}
 
 # Les doublons ne rapportent plus de pièces tout seuls : ils restent en stock et on choisit
-# de les VENDRE (la moitié de l'ancienne valeur) ou de les DÉPENSER pour monter une carte de niveau.
+# de les VENDRE (la moitié de l'ancienne valeur) ou de les DÉPENSER pour améliorer la finition d'une carte.
 VALEUR_VENTE = {
     "commune": 1,
     "rare": 3,
@@ -71,25 +71,24 @@ VALEUR_VENTE = {
     "secrète": 125,
 }
 
-# Niveaux : 1 (départ), 2, 3, puis 4 = niveau max. Coût en doublons pour passer au niveau suivant.
-NIVEAU_MAX = 4
-COUT_NIVEAU = {   # [niveau 1 -> 2, 2 -> 3, 3 -> max]
-    "commune": [3, 5, 8],
-    "rare": [3, 4, 6],
-    "super rare": [2, 3, 5],
-    "ultra rare": [2, 3, 4],
-    "légendaire": [1, 2, 3],
-    "secrète": [1, 1, 2],
+# Améliorer une carte : on dépense des doublons de cette carte pour la faire passer de normale à brillante,
+# puis de brillante à arc-en-ciel. Coût en doublons : [vers brillante, vers arc-en-ciel].
+COUT_AMELIORATION = {
+    "commune": [18, 36],
+    "rare": [8, 16],
+    "super rare": [4, 10],
+    "ultra rare": [3, 6],
+    "légendaire": [2, 5],
+    "secrète": [1, 2],
 }
-BONUS_POINTS_NIVEAU = [0, 0.5, 1.5, 3]   # points du classement en plus (fois les points de la carte), par niveau
 
 # Cartes fantômes : dans cartes.json, une carte avec "fantome": true. Elle se révèle peu à peu :
 # chaque exemplaire tiré découvre une part de l'image (mosaïque). REQUIS = exemplaires pour tout révéler.
 REQUIS_FANTOME = {
-    "commune": 6,
-    "rare": 5,
-    "super rare": 4,
-    "ultra rare": 3,
+    "commune": 10,
+    "rare": 8,
+    "super rare": 6,
+    "ultra rare": 4,
     "légendaire": 3,
     "secrète": 2,
 }
@@ -158,14 +157,14 @@ def etat_initial(maintenant=0):
     # codes_utilises : les codes déjà utilisés
     # stat_boosters, stat_points, stat_attendu : boosters ouverts (hors tests/admin), points tirés, points qu'on en attendait en moyenne ("chance")
     # doublons   : exemplaires en stock, à vendre ou à dépenser : {id: {"normale": n, "brillante": n, "arc-en-ciel": n}}
-    # niveaux    : {id: niveau de 1 à NIVEAU_MAX} (absent = niveau 1)
+    # retires    : {id: {"normale": n, ...}} exemplaires vendus ou dépensés (le score, lui, ne baisse jamais)
     # vitrine    : jusqu'à 3 cartes montrées sur le profil : [{"id": 12, "finition": "brillante"}, ...]
     return {
         "collection": {}, "finitions": {}, "monnaie": 0, "boosters_ouverts": 0, "sans_rare": 0,
         "stock": BOOSTERS_DEPART, "horloge": int(maintenant), "progres": 0.0, "achetes": 0, "achetes_ur": 0,
         "multi": None, "roue_jour": "", "codes_utilises": [],
         "stat_boosters": 0, "stat_points": 0, "stat_attendu": 0.0, "vitrine": [],
-        "doublons": {}, "niveaux": {},
+        "doublons": {}, "retires": {},
     }
 
 
@@ -367,8 +366,20 @@ def nb_doublons(etat, carte_id):
     return sum(stock.get(f, 0) for f in _FINS)
 
 
-def niveau_carte(etat, carte_id):
-    return etat.get("niveaux", {}).get(str(carte_id), 1)
+def exemplaires_possedes(etat, carte_id):
+    """Exemplaires que le joueur a encore, par finition : {"normale": n, "brillante": n, "arc-en-ciel": n}."""
+    cle = str(carte_id)
+    n = etat.get("collection", {}).get(cle, 0)
+    f = etat.get("finitions", {}).get(cle, {})
+    b, a = f.get("brillante", 0), f.get("arc-en-ciel", 0)
+    r = etat.get("retires", {}).get(cle, {})
+    brut = {"normale": max(n - b - a, 0), "brillante": b, "arc-en-ciel": a}
+    return {fin: max(brut[fin] - r.get(fin, 0), 0) for fin in _FINS}
+
+
+def meilleure_finition(etat, carte_id):
+    p = exemplaires_possedes(etat, carte_id)
+    return "arc-en-ciel" if p["arc-en-ciel"] > 0 else "brillante" if p["brillante"] > 0 else "normale"
 
 
 def fantome_revelee(etat, carte):
@@ -389,6 +400,9 @@ def _retirer_doublons(etat, carte_id, nombre):
             nombre -= 1
     if not any(stock.values()):
         etat["doublons"].pop(str(carte_id), None)
+    r = etat.setdefault("retires", {}).setdefault(str(carte_id), {})
+    for f in retires:
+        r[f] = r.get(f, 0) + 1
     return retires
 
 
@@ -416,30 +430,34 @@ def vendre_tous(etat, cartes):
     return gain, vendus
 
 
-def cout_niveau(rarete, niveau):
-    """Doublons à dépenser pour passer au niveau suivant (None si déjà au niveau max)."""
-    if niveau >= NIVEAU_MAX:
+def cout_amelioration(rarete, finition):
+    """Doublons à dépenser pour passer de cette finition à la suivante (None si c'est déjà arc-en-ciel)."""
+    if finition == "arc-en-ciel":
         return None
-    return COUT_NIVEAU[rarete][niveau - 1]
+    return COUT_AMELIORATION[rarete][_FINS.index(finition)]
 
 
 def ameliorer(etat, cartes, carte_id):
-    """Dépense des doublons pour monter la carte d'un niveau. Renvoie le nouveau niveau."""
+    """Dépense des doublons : la carte passe de normale à brillante, ou de brillante à arc-en-ciel. Renvoie la nouvelle finition."""
     c = _carte(cartes, carte_id)
     cle = str(carte_id)
     if etat.get("collection", {}).get(cle, 0) <= 0:
         raise ValueError("Tu n'as pas cette carte.")
     if not fantome_revelee(etat, c):
         raise ValueError("Cette carte fantôme n'est pas encore entièrement révélée.")
-    niveau = niveau_carte(etat, carte_id)
-    cout = cout_niveau(c["rarete"], niveau)
+    actuelle = meilleure_finition(etat, carte_id)
+    cout = cout_amelioration(c["rarete"], actuelle)
     if cout is None:
-        raise ValueError("Cette carte est déjà au niveau maximum.")
+        raise ValueError("Cette carte est déjà arc-en-ciel.")
     if nb_doublons(etat, carte_id) < cout:
-        raise ValueError(f"Il te faut {cout} doublons pour monter de niveau.")
+        raise ValueError(f"Il te faut {cout} doublons pour améliorer cette carte.")
     _retirer_doublons(etat, carte_id, cout)
-    etat.setdefault("niveaux", {})[cle] = niveau + 1
-    return niveau + 1
+    nouvelle = _FINS[_FINS.index(actuelle) + 1]
+    f = etat.setdefault("finitions", {}).setdefault(cle, {})
+    if actuelle != "normale":
+        f[actuelle] = max(f.get(actuelle, 0) - 1, 0)   # l'exemplaire change de finition
+    f[nouvelle] = f.get(nouvelle, 0) + 1
+    return nouvelle
 
 
 def points_carte(rarete, finition):
@@ -582,8 +600,7 @@ def reglages_web():
         "poids": [RARETES[r] for r in ORDRE],
         "valeurs": [VALEUR_VENTE[r] for r in ORDRE],
         "requis_fantome": [REQUIS_FANTOME[r] for r in ORDRE],
-        "couts_niveau": [COUT_NIVEAU[r] for r in ORDRE],
-        "niveau_max": NIVEAU_MAX,
+        "couts_amelioration": [COUT_AMELIORATION[r] for r in ORDRE],
         "bonus": BONUS_FINITION,
         "chance_brillante": CHANCE_BRILLANTE,
         "chance_arc": CHANCE_ARC_EN_CIEL,
@@ -668,10 +685,10 @@ def vendre_tous_web(etat_json, cartes_json):
 def ameliorer_web(etat_json, cartes_json, carte_id):
     etat, cartes = json.loads(etat_json), json.loads(cartes_json)
     try:
-        niveau = ameliorer(etat, cartes, int(carte_id))
+        finition = ameliorer(etat, cartes, int(carte_id))
     except ValueError as e:
         return json.dumps({"erreur": str(e), "etat": etat}, ensure_ascii=False)
-    return json.dumps({"niveau": niveau, "etat": etat}, ensure_ascii=False)
+    return json.dumps({"finition": finition, "etat": etat}, ensure_ascii=False)
 
 
 def acheter_web(etat_json, offre_id, maintenant):
@@ -708,7 +725,6 @@ def calculer_profil(etat, cartes):
         f = etat.get("finitions", {}).get(cle, {})
         b, a = f.get("brillante", 0), f.get("arc-en-ciel", 0)
         score += POINTS[r] * (max(n - b - a, 0) + b * BONUS_FINITION["brillante"] + a * BONUS_FINITION["arc-en-ciel"])
-        score += POINTS[r] * BONUS_POINTS_NIVEAU[min(etat.get("niveaux", {}).get(cle, 1), NIVEAU_MAX) - 1]
         possedees += 1
         par_rarete[r] += 1
         brillantes += 1 if b > 0 else 0
@@ -725,15 +741,15 @@ def calculer_profil(etat, cartes):
         cle = str(v.get("id"))
         f = etat.get("finitions", {}).get(cle, {})
         fin = v.get("finition", "normale")
+        if fin != "normale" and f.get(fin, 0) <= 0:
+            fin = meilleure_finition(etat, v.get("id"))   # la finition choisie n'existe plus (carte améliorée ou vendue)
         carte = par_id.get(v.get("id"))
         if carte and etat.get("collection", {}).get(cle, 0) > 0 and fantome_revelee(etat, carte) and (fin == "normale" or f.get(fin, 0) > 0):
-            vitrine.append({"id": v["id"], "finition": fin, "niveau": niveau_carte(etat, v["id"])})
+            vitrine.append({"id": v["id"], "finition": fin})
     fantomes = [c for c in cartes if c.get("fantome")]
-    niveaux = [niveau_carte(etat, c["id"]) for c in cartes if etat.get("collection", {}).get(str(c["id"]), 0) > 0]
     return {
         "fantomes": sum(1 for c in fantomes if fantome_revelee(etat, c) and etat.get("collection", {}).get(str(c["id"]), 0) > 0),
         "fantomes_total": len(fantomes),
-        "niveau_max": sum(1 for n in niveaux if n >= NIVEAU_MAX), "niveaux": sum(n - 1 for n in niveaux),
         "score": int(round(score)), "possedees": possedees, "total": len(cartes),
         "boosters": etat.get("boosters_ouverts", 0), "brillantes": brillantes, "arcs": arcs,
         "par_rarete": [par_rarete[r] for r in ORDRE], "chance": chance, "vitrine": vitrine,

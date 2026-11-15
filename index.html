@@ -390,65 +390,6 @@ button.carte-fixe { cursor: pointer; }
 .classement { max-width: 640px; margin: 0 auto; }
 .groupe-titre { grid-column: 1 / -1; margin: 18px 0 2px; padding-bottom: 6px; border-bottom: 1px solid var(--trait); font-size: 16px; color: var(--doux); }
 .groupe-titre:first-child { margin-top: 4px; }
-/* niveaux : les cartes s'embellissent quand on dépense des doublons */
-@keyframes n-monte { 0% { transform: translateY(0) scale(.6); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(-62cqw) scale(1); opacity: 0; } }
-@keyframes n-tourne-rayons { to { transform: rotate(360deg); } }
-@keyframes n-respire { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
-@keyframes n-flux { to { background-position: 300% 0; } }
-@keyframes n-gemme { 50% { filter: brightness(1.7) drop-shadow(0 0 2cqw var(--c-clair)); } }
-@keyframes n-lueur { 50% { opacity: .55; } }
-
-.niv-parts { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
-.niv-parts i { position: absolute; bottom: -4cqw; width: var(--t); height: var(--t); border-radius: 50%; background: var(--c-clair);
-  box-shadow: 0 0 2cqw .6cqw var(--c); opacity: 0; animation: n-monte var(--d) linear var(--w) infinite; }
-.recto[data-r="2"] .niv-parts i, .recto[data-r="4"] .niv-parts i, .recto[data-r="5"] .niv-parts i { border-radius: 0; transform: rotate(45deg); }
-.recto[data-r="3"] .niv-parts i { background: #ffd08a; box-shadow: 0 0 2.4cqw .8cqw #ff5a30; }
-.recto[data-r="4"] .niv-parts i { background: #fff6c4; box-shadow: 0 0 2.4cqw .8cqw #ffc02e; }
-
-/* lumière derrière l'illustration */
-.niv-rayons { position: absolute; left: 50%; top: 42%; width: 190%; aspect-ratio: 1; margin: -95% 0 0 -95%; pointer-events: none; z-index: 0; mix-blend-mode: screen; opacity: .0;
-  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c-clair) 70%, transparent) 0 6deg, transparent 6deg 22deg);
-  -webkit-mask: radial-gradient(circle, #000 4%, transparent 62%); mask: radial-gradient(circle, #000 4%, transparent 62%);
-  animation: n-tourne-rayons 26s linear infinite, n-lueur 4s ease-in-out infinite; }
-.recto[data-n="3"] .niv-rayons { opacity: .34; }
-.recto[data-n="4"] .niv-rayons { opacity: .65; animation-duration: 14s, 3s; }
-.recto[data-n="4"] .art img, .recto[data-n="4"] .art.sans-image { animation: n-respire 5s ease-in-out infinite; }
-
-/* cadre : de plus en plus épais, de plus en plus travaillé */
-.niv-ring { position: absolute; inset: .9cqw; border-radius: 6.2cqw; pointer-events: none; padding: var(--e, 1.4cqw);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude; }
-.recto[data-n="2"] .niv-ring { --e: 1.7cqw; background: linear-gradient(150deg, var(--c-clair), var(--c-fonce) 50%, var(--c-clair)); }
-.recto[data-n="3"] .niv-ring { --e: 2.4cqw; background: repeating-linear-gradient(115deg, var(--c-clair) 0, var(--c) 6cqw, var(--c-fonce) 10cqw, var(--c) 14cqw, var(--c-clair) 20cqw) 0 0 / 300% 100%; animation: n-flux 6s linear infinite; }
-.recto[data-n="4"] .niv-ring { --e: 3cqw; background: conic-gradient(from var(--ang), var(--c-clair), #fff 12%, var(--c) 30%, var(--c-fonce) 50%, var(--c) 70%, #fff 88%, var(--c-clair)); animation: tourne 5s linear infinite; }
-.recto[data-n="2"] .ext, .recto[data-n="3"] .ext, .recto[data-n="4"] .ext { box-shadow: 0 0 5cqw color-mix(in srgb, var(--c) 45%, transparent), 0 1.5cqw 5cqw rgba(0,0,0,.55); }
-.recto[data-n="4"] .ext { box-shadow: 0 0 9cqw 1cqw color-mix(in srgb, var(--c) 80%, transparent), 0 1.5cqw 5cqw rgba(0,0,0,.55); }
-.niv-fil { position: absolute; inset: 4.2cqw; border-radius: 3.6cqw; border: .5cqw solid color-mix(in srgb, var(--c-clair) 60%, transparent); pointer-events: none; z-index: 3; }
-
-/* gemmes aux coins */
-.niv-gem { position: absolute; width: 7.5cqw; height: 7.5cqw; transform: rotate(45deg); z-index: 5; pointer-events: none;
-  background: radial-gradient(circle at 35% 30%, #fff, var(--c-clair) 35%, var(--c-fonce) 90%); border: .5cqw solid rgba(255,255,255,.75); box-shadow: 0 0 2.4cqw var(--c); }
-.niv-gem.a { top: -1cqw; left: -1cqw; } .niv-gem.b { top: -1cqw; right: -1cqw; } .niv-gem.c { bottom: -1cqw; left: -1cqw; } .niv-gem.d { bottom: -1cqw; right: -1cqw; }
-.recto[data-n="4"] .niv-gem { width: 9.5cqw; height: 9.5cqw; animation: n-gemme 2.2s ease-in-out infinite; }
-
-/* pastille de niveau */
-.niv-pastille { position: absolute; top: 18cqw; left: 5cqw; z-index: 4; padding: .15em .6em; border-radius: 3cqw; font-size: 7.6cqw; line-height: 1.2; letter-spacing: .06em; font-style: italic;
-  color: #10131c; background: linear-gradient(150deg, var(--c-clair), var(--c)); box-shadow: 0 0 2.4cqw var(--c); }
-.recto[data-n="4"] .niv-pastille { background: linear-gradient(100deg, #fff, var(--c-clair), #fff, var(--c-clair)) 0 0 / 300% 100%; animation: n-flux 3s linear infinite; }
-
-/* le nom suit */
-.recto[data-n="2"][data-r="0"] .nom, .recto[data-n="2"][data-r="1"] .nom { text-shadow: 0 0 2.4cqw var(--c), 0 .4cqw .8cqw rgba(0,0,0,.6); }
-.recto[data-n="3"][data-r="0"] .nom, .recto[data-n="3"][data-r="1"] .nom, .recto[data-n="4"][data-r="0"] .nom, .recto[data-n="4"][data-r="1"] .nom { color: var(--c-clair); text-shadow: 0 0 3cqw var(--c), 0 0 6cqw var(--c), 0 .4cqw .8cqw rgba(0,0,0,.6); letter-spacing: .04em; }
-.recto[data-n="3"] .trait, .recto[data-n="4"] .trait { height: 1.8cqw; background: linear-gradient(90deg, var(--c-clair), var(--c), transparent); box-shadow: 0 0 2cqw var(--c); }
-
-/* finitions */
-.recto[data-f="arc"][data-n="2"] .niv-ring, .recto[data-f="arc"][data-n="3"] .niv-ring { background: linear-gradient(135deg, #ff7ad9, #ffe36b, #8ef0a3, #6fd0ff, #a58bff, #ff7ad9) 0 0 / 300% 100%; }
-.recto[data-f="arc"][data-n="4"] .niv-ring { background: conic-gradient(from var(--ang), #ff7ad9, #ffe36b, #8ef0a3, #6fd0ff, #a58bff, #ff7ad9); }
-.recto[data-f="arc"][data-n] .niv-parts i { background: #fff; box-shadow: 0 0 2cqw .6cqw #ff7ad9, 0 0 3cqw 1cqw #6fd0ff; }
-.recto[data-f="arc"][data-n] .niv-rayons { background: repeating-conic-gradient(from 0deg, rgba(255,122,217,.7) 0 5deg, rgba(255,227,107,.7) 5deg 10deg, rgba(142,240,163,.7) 10deg 15deg, rgba(111,208,255,.7) 15deg 20deg, transparent 20deg 30deg); }
-.recto[data-f="brillante"][data-n] .niv-parts i { background: #fff; box-shadow: 0 0 2.4cqw 1cqw #fff; }
-.recto[data-f="brillante"][data-n] .niv-pastille { background: #fff; }
-
 /* cartes fantômes : l'image se révèle en mosaïque */
 .art canvas.fant { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .recto.fantome .ext { filter: saturate(calc(.25 + var(--rev, 0) * .75)); }
@@ -459,9 +400,6 @@ button.carte-fixe { cursor: pointer; }
 .recto.fantome[data-rev="100"] .fant-pastille { background: linear-gradient(150deg, var(--c-clair), var(--c)); color: #10131c; border-color: transparent; }
 .fant-compte { position: absolute; left: 6cqw; bottom: 3.2cqw; font-size: 5.6cqw; letter-spacing: .08em; color: rgba(255,255,255,.7); z-index: 4; font-style: normal; }
 
-.grille .niv-parts, .vitrine .niv-parts { display: none; }
-.grille .niv-rayons, .vitrine .niv-rayons { animation: none; }
-.grille .recto[data-n="4"] .art img, .vitrine .recto[data-n="4"] .art img { animation: none; }
 .coll-doublons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 14px 0 0; padding: 12px 16px; border: 1px solid var(--trait); border-radius: 14px; background: var(--panneau); font-size: 14.5px; }
 .coll-doublons p { margin: 0; flex: 1 1 240px; color: var(--doux); }
 .zoom-actions { margin: 0 0 14px; }
@@ -469,9 +407,6 @@ button.carte-fixe { cursor: pointer; }
 .zoom-actions .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .zoom-actions .btn { padding: 9px 14px; font-size: 14px; }
 .zoom-actions .msg { color: var(--texte); min-height: 1.2em; }
-.niv-barre { display: flex; gap: 5px; margin: 0 0 10px; }
-.niv-barre i { flex: 1; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, .14); }
-.niv-barre i.on { background: linear-gradient(90deg, var(--c-clair, #fff), var(--c, #fff)); box-shadow: 0 0 8px var(--c, #fff); }
 
 .am-resume { margin-top: 14px; font-size: 14.5px; }
 .table-masse { border-collapse: collapse; margin: 8px 0; }
@@ -625,7 +560,6 @@ footer p { margin: 0; }
 .coll-cols button[aria-pressed="true"] { background: rgba(255, 255, 255, .14); color: #fff; border-color: rgba(255, 255, 255, .4); }
 @media (prefers-reduced-motion: reduce) {
   .recto:not(.manquante) .nom { animation: none !important; }
-  .niv-parts, .niv-rayons { display: none !important; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 </style>
@@ -1202,9 +1136,8 @@ async function envoyer(keepalive) {
   }
 }
 
-/* ---------- niveaux, doublons et cartes fantômes ---------- */
+/* ---------- doublons, améliorations et cartes fantômes ---------- */
 const idDe = (c) => String(c.id);
-const niveauDe = (c) => (etat.niveaux && etat.niveaux[idDe(c)]) || 1;
 const copiesDe = (c) => etat.collection[idDe(c)] || 0;
 function infoFantome(c) {  // {k, requis} tant qu'une carte fantôme n'est pas entièrement révélée
   if (!c.fantome) return null;
@@ -1290,23 +1223,6 @@ function animerFantome(f) {  // à l'ouverture d'un booster : les nouveaux carre
   };
   requestAnimationFrame(pas);
 }
-function ajouterNiveau(f, n) {  // l'allure d'une carte qui a monté de niveau
-  f.dataset.n = n;
-  const int = f.querySelector(".int"), ext = f.querySelector(".ext");
-  int.insertBefore(el("div", "niv-rayons"), int.querySelector(".ombre"));
-  const parts = el("div", "niv-parts");
-  const nb = n === 2 ? 5 : n === 3 ? 10 : 18;
-  for (let i = 0; i < nb; i++) {
-    const p = document.createElement("i");
-    p.style.cssText = `left:${6 + Math.random() * 88}%;--t:${(1.6 + Math.random() * 2.2).toFixed(1)}cqw;--d:${(3.2 + Math.random() * 3).toFixed(1)}s;--w:-${(Math.random() * 6).toFixed(1)}s`;
-    parts.append(p);
-  }
-  int.insertBefore(parts, int.querySelector(".code"));
-  int.append(el("div", "niv-fil"), el("span", "niv-pastille", n >= REGL.niveau_max ? "MAX" : "NIV. " + n));
-  ext.append(el("div", "niv-ring"));
-  if (n >= 3) for (const k of "abcd") ext.append(el("div", "niv-gem " + k));
-}
-
 /* le profil public : pseudo, score, stats et vitrine (jamais les points de chaque carte) */
 function monProfil() {
   return { pseudo: compte.pseudo, ...JSON.parse(profilPy(JSON.stringify(etat), CARTES_TXT)) };
@@ -1405,7 +1321,6 @@ function faceCarte(c, o = {}) {
   if (r >= 4 && !o.manquante) ext.append(el("div", "reflet"));
   if (secrete) f.append(el("span", "aura"));
   f.append(ext);
-  if (!fan && !o.manquante && (o.niveau || 1) > 1) ajouterNiveau(f, Math.min(o.niveau, REGL.niveau_max));
 
   if (o.nouvelle) f.append(el("span", "badge", "Nouvelle"));
   else if (o.nouvelleFinition) f.append(el("span", "badge", "Nouvelle finition"));
@@ -1459,7 +1374,7 @@ function ambiance(r) {  // la lumière derrière la scène prend la couleur de l
 function optionsTirage(c) {  // ce qu'il faut savoir pour dessiner une carte qui vient d'être tirée
   return {
     nouvelle: c.nouvelle, nouvelleFinition: c.nouvelle_finition, finition: c.finition, doublon: c.doublon,
-    niveau: niveauDe(c), fantome: c.revelation ? { k: c.revelation.apres, avant: c.revelation.avant, requis: c.revelation.requis } : null,
+    fantome: c.revelation ? { k: c.revelation.apres, avant: c.revelation.avant, requis: c.revelation.requis } : null,
   };
 }
 
@@ -2108,11 +2023,16 @@ function adminOuvrir(modes) {
 }
 
 /* ---------- collection ---------- */
-const exemplaires = (c) => {
+const exemplaires = (c) => {  // ce qu'on possède encore (les exemplaires vendus ou dépensés ne comptent plus)
   const n = etat.collection[String(c.id)] || 0;
-  const f = etat.finitions[String(c.id)] || {};
+  const f = (etat.finitions && etat.finitions[String(c.id)]) || {};
+  const r = (etat.retires && etat.retires[String(c.id)]) || {};
   const b = f["brillante"] || 0, a = f["arc-en-ciel"] || 0;
-  return { total: n, "normale": Math.max(n - b - a, 0), "brillante": b, "arc-en-ciel": a };
+  const out = { "normale": Math.max(Math.max(n - b - a, 0) - (r["normale"] || 0), 0),
+    "brillante": Math.max(b - (r["brillante"] || 0), 0), "arc-en-ciel": Math.max(a - (r["arc-en-ciel"] || 0), 0) };
+  out.total = out["normale"] + out["brillante"] + out["arc-en-ciel"];
+  if (n > 0 && out.total === 0) out["normale"] = out.total = 1;
+  return out;
 };
 const meilleureFinition = (c) => {
   const e = exemplaires(c);
@@ -2120,7 +2040,7 @@ const meilleureFinition = (c) => {
 };
 
 function majCollection() {
-  const nb = (c) => etat.collection[String(c.id)] || 0;
+  const nb = (c) => ((etat.collection[String(c.id)] || 0) > 0 ? exemplaires(c).total : 0);
   const possedees = CARTES.filter((c) => nb(c) > 0).length;
   const brillantes = CARTES.filter((c) => exemplaires(c)["brillante"] > 0).length;
   const arcs = CARTES.filter((c) => exemplaires(c)["arc-en-ciel"] > 0).length;
@@ -2203,7 +2123,7 @@ function majCollection() {
     const conteneur = el(n ? "button" : "div", "carte-fixe");
     conteneur.dataset.r = rang(c);
     const tilt = el("div", "tilt");
-    tilt.append(faceCarte(c, { manquante: n === 0, nb: n, finition: meilleureFinition(c), paresseux: true, niveau: niveauDe(c), fantome: infoFantome(c) }));
+    tilt.append(faceCarte(c, { manquante: n === 0, nb: n, finition: meilleureFinition(c), paresseux: true, fantome: infoFantome(c) }));
     conteneur.append(tilt);
     if (n === 0) {
       conteneur.setAttribute("aria-label", `Carte n° ${c.id}, pas encore trouvée`);
@@ -2240,7 +2160,7 @@ function rendreZoom() {
   const cont = el("div", "carte-fixe");
   cont.dataset.r = rang(c);
   const tilt = el("div", "tilt");
-  tilt.append(faceCarte(c, { finition: finZoom, niveau: niveauDe(c), fantome: infoFantome(c) }));
+  tilt.append(faceCarte(c, { finition: finZoom, fantome: infoFantome(c) }));
   cont.append(tilt);
   activerInclinaison(cont);
   $("#zoom-carte").replaceChildren(cont);
@@ -2272,26 +2192,28 @@ function actionsZoom(c) {
     z.append(el("p", "", `Carte fantôme : ${fan.k} / ${fan.requis} exemplaires. Chaque exemplaire que tu tires révèle une part de l'image.`));
     return;
   }
-  const r = rang(c), niv = niveauDe(c), max = REGL.niveau_max, stock = stockDe(c);
-  const cout = niv >= max ? null : REGL.couts_niveau[r][niv - 1];
-  const barre = el("div", "niv-barre");
-  for (let i = 1; i <= max; i++) barre.append(el("i", i <= niv ? "on" : ""));
+  const r = rang(c), stock = stockDe(c), actuelle = meilleureFinition(c);
+  const suivante = actuelle === "normale" ? "brillante" : actuelle === "brillante" ? "arc-en-ciel" : null;
+  const cout = suivante ? REGL.couts_amelioration[r][FINITIONS.indexOf(actuelle)] : null;
   const msg = el("p", "msg");
   msg.setAttribute("aria-live", "polite");
-  z.append(barre, el("p", "", niv >= max ? "Niveau maximum !" : `Niveau ${niv} sur ${max}. Prochain niveau : ${pluriel(cout, "doublon", "doublons")}.`),
+  z.append(el("p", "", suivante
+      ? `Pour la passer en ${NOMS_FIN[suivante].toLowerCase()} : ${pluriel(cout, "doublon", "doublons")}.`
+      : "Cette carte est arc-en-ciel : c'est la finition maximale !"),
     el("p", "", stock.total ? `Tu as ${pluriel(stock.total, "doublon", "doublons")} de cette carte.` : "Tu n'as pas de doublon de cette carte."));
   const btns = el("div", "btns");
   const agir = async (fonction, args, texte) => {
     const res = JSON.parse(fonction(...args));
     etat = res.etat;
     if (res.erreur) { msg.textContent = res.erreur; return; }
+    if (res.finition) finZoom = res.finition;
     sauvegarder(); majStats(); majPieces(); majCollection(); rendreZoom();
     $("#zoom-actions .msg").textContent = texte(res);
   };
-  if (cout !== null) {
-    const b = el("button", "btn", `Améliorer · ${pluriel(cout, "doublon", "doublons")}`);
+  if (suivante) {
+    const b = el("button", "btn", `Passer en ${NOMS_FIN[suivante].toLowerCase()} · ${pluriel(cout, "doublon", "doublons")}`);
     b.type = "button"; b.disabled = stock.total < cout;
-    b.addEventListener("click", () => agir(ameliorerPy, [JSON.stringify(etat), CARTES_TXT, c.id], (res) => `Niveau ${res.niveau} atteint !`));
+    b.addEventListener("click", () => agir(ameliorerPy, [JSON.stringify(etat), CARTES_TXT, c.id], (res) => `Carte passée en ${NOMS_FIN[res.finition].toLowerCase()} !`));
     btns.append(b);
   }
   if (stock.total > 0) {
@@ -2393,8 +2315,8 @@ function rendreInfos() {
   );
   const nbFant = CARTES.filter((c) => c.fantome).length;
   infos.append(
-    bloc("Niveaux", `Dépense des doublons d'une carte pour la faire monter jusqu'au niveau ${REGL.niveau_max} : son cadre et ses effets deviennent de plus en plus marqués. Nombre de doublons à dépenser pour passer chaque niveau.`,
-      tableau(["Rareté", "Niveau 2", "Niveau 3", "Niveau max"], REGL.ordre.map((nom, r) => ({ r, cellules: [majuscule(nom), ...REGL.couts_niveau[r].map(String)] })))),
+    bloc("Améliorer une carte", "Avec les doublons d'une carte, tu peux la faire passer de normale à brillante, puis de brillante à arc-en-ciel. Nombre de doublons à dépenser :",
+      tableau(["Rareté", "Vers brillante", "Vers arc-en-ciel"], REGL.ordre.map((nom, r) => ({ r, cellules: [majuscule(nom), ...REGL.couts_amelioration[r].map(String)] })))),
   );
   if (nbFant) infos.append(bloc("Cartes fantômes", `Certaines cartes (${nbFant} dans le jeu) sont des fantômes : quand tu les tires, on ne voit presque rien. Chaque exemplaire révèle une part de l'image, jusqu'à ce que tu aies tous les exemplaires. Un fantôme est révélé plus vite si sa rareté est élevée.`,
     tableau(["Rareté", "Exemplaires pour tout révéler"], REGL.ordre.map((nom, r) => ({ r, cellules: [majuscule(nom), String(REGL.requis_fantome[r])] })))));
@@ -2478,7 +2400,7 @@ function cartesVitrine(zone, vitrine) {
     const cont = el("div", "carte-fixe");
     cont.dataset.r = rang(c);
     const tilt = el("div", "tilt");
-    tilt.append(faceCarte(c, { finition: FINITIONS.includes(v.finition) ? v.finition : "normale", niveau: v.niveau || 1 }));
+    tilt.append(faceCarte(c, { finition: FINITIONS.includes(v.finition) ? v.finition : "normale" }));
     cont.append(tilt);
     activerInclinaison(cont);
     zone.append(cont);
@@ -2511,7 +2433,6 @@ function ouvrirProfil(uid) {
   stat(String(p.brillantes), "Cartes brillantes");
   stat(String(p.arcs), "Cartes arc-en-ciel");
   if (p.fantomes_total) stat(`${p.fantomes}/${p.fantomes_total}`, "Cartes fantômes révélées");
-  stat(String(p.niveau_max || 0), "Cartes au niveau max");
   const detail = el("p", "sous", REGL.ordre.map((n, r) => `${majuscule(n)} ${p.par_rarete[r]}`).join(" · "));
 
   const vit = el("div", "vitrine");
@@ -2547,7 +2468,7 @@ function preparerChoixVitrine(choix, vit) {
       b.dataset.r = rang(c);
       b.setAttribute("aria-label", `${c.nom}, ${c.rarete}`);
       const tilt = el("div", "tilt");
-      tilt.append(faceCarte(c, { finition: meilleureFinition(c), paresseux: true, niveau: niveauDe(c) }));
+      tilt.append(faceCarte(c, { finition: meilleureFinition(c), paresseux: true }));
       b.append(tilt);
       b.addEventListener("click", () => {
         if (sel.includes(c.id)) sel = sel.filter((x) => x !== c.id);
