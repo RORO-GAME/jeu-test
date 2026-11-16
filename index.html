@@ -30,7 +30,7 @@
 [data-r="3"] { --c: #ff4458; --c-clair: #ff9c9c; --c-fonce: #c4122a; --rb: .75; --rf: .33; }
 [data-r="4"] { --c: #f2c14e; --c-clair: #fff1ae; --c-fonce: #a8741d; --rb: .9;  --rf: .42;
   --bord: linear-gradient(150deg, #fff3b8, #e2ad45 30%, #a8741d 52%, #f1cf6a 78%, #fff0a8); }
-[data-r="5"] { --c: #dfe6f0; --c-clair: #ffffff; --c-fonce: #8fa0b5; --rb: 1;   --rf: .5;
+[data-r="5"] { --c: #dfe6f0; --c-clair: #ffffff; --c-fonce: #8fa0b5; --rb: 1;   --rf: .4;
   --bord: linear-gradient(150deg, #ffffff, #bcc8d8 26%, #f4f8ff 48%, #9eb0c6 72%, #f6faff); }
 
 * { box-sizing: border-box; }
@@ -207,7 +207,8 @@ button.carte-fixe { cursor: pointer; }
 .foil, .glare { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
 .foil {
   mix-blend-mode: color-dodge;
-  background: linear-gradient(115deg, #ff7ad9, #ffe36b 18%, #8ef0a3 34%, #6fd0ff 50%, #a58bff 66%, #ff7ad9 84%, #ffe36b);
+  /* teintes rouge, rose, violet et bleu surtout : le jaune et le vert lavaient l'image. Un peu d'orange seulement tout au bout. */
+  background: linear-gradient(115deg, #ff5c8a, #ff7ad9 12%, #a58bff 26%, #6f9bff 38%, #b66bff 50%, #ff5c8a 62%, #ff4458 72%, #d96bff 84%, #ff7ad9 93%, #ff9a5c);
   background-size: 250% 250%;
 }
 .glare { mix-blend-mode: overlay; background: radial-gradient(circle at var(--mx, 30%) var(--my, 22%), rgba(255, 255, 255, .6), transparent 46%); }
