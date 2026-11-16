@@ -47,7 +47,9 @@ PITIE_RARETE = "super rare"
 CHANCE_BRILLANTE = 0.02
 CHANCE_ARC_EN_CIEL = 0.005
 
-# Monnaie : un doublon (une carte que tu as déjà) rapporte des pièces.
+# Monnaie : un doublon (une carte que tu as déjà) rapporte des pièces quand tu le tires dans un booster
+# (valeur_vente ci-dessous), puis la même somme si tu le vends ensuite : au total, la valeur d'avant.
+# Les exemplaires qui servent à révéler une carte fantôme ne rapportent rien.
 # Plus la carte est rare, plus elle rapporte. Une carte brillante ou arc-en-ciel
 # rapporte un peu plus : la valeur est multipliée, puis arrondie.
 VALEUR_DOUBLON = {
@@ -117,10 +119,14 @@ ADMIN_PSEUDO = "admin1234"
 
 # Roue de la chance : un tour par jour, remis à zéro à minuit.
 # "poids" = chance en % (le total fait 100). L'ordre de la liste est l'ordre sur la roue.
-# Une récompense peut donner "pieces", "boosters" ou un multiplicateur "multi" (×2, ×3, ×5 : un booster gratuit
-# arrive 2, 3 ou 5 fois plus vite pendant MULTI_DUREE_SECONDES).
+# Une récompense peut donner "pieces", "boosters", un multiplicateur "multi" (×2, ×3, ×5 : un booster gratuit
+# arrive 2, 3 ou 5 fois plus vite pendant MULTI_DUREE_SECONDES) ou un "joker" fantôme.
+# Les multiplicateurs et les jokers gagnés sont mis de côté : on les utilise quand on veut, et ils s'empilent.
+# On peut tourner la roue autant qu'on veut dans la journée : le premier tour est gratuit, les suivants coûtent PRIX_ROUE.
+PRIX_ROUE = 120
 ROUE = [
-    {"id": "p10", "texte": "10 pièces", "court": "10 pièces", "poids": 25, "pieces": 10},
+    {"id": "p10", "texte": "10 pièces", "court": "10 pièces", "poids": 20, "pieces": 10},
+    {"id": "joker", "texte": "Joker fantôme", "court": "Joker", "poids": 5, "joker": 1},
     {"id": "x2", "texte": "Multiplicateur ×2", "court": "×2", "poids": 20, "multi": 2},
     {"id": "p25", "texte": "25 pièces", "court": "25", "poids": 10, "pieces": 25},
     {"id": "b1", "texte": "1 booster", "court": "Booster", "poids": 20, "boosters": 1},
@@ -133,11 +139,11 @@ ROUE = [
 # Boutique : "boosters" = boosters normaux ajoutés, "ur" = boosters "ultra rare garantie" ajoutés.
 # Les boosters achetés ne sont pas limités par STOCK_MAX.
 BOUTIQUE = [
-    {"id": "unite", "nom": "1 booster", "prix": 10, "boosters": 1, "ur": 0,
+    {"id": "unite", "nom": "1 booster", "prix": 20, "boosters": 1, "ur": 0,
      "texte": "Un booster de plus, tout de suite."},
-    {"id": "x10", "nom": "10 boosters", "prix": 90, "boosters": 10, "ur": 0,
+    {"id": "x10", "nom": "10 boosters", "prix": 180, "boosters": 10, "ur": 0,
      "texte": "Dix boosters pour le prix de neuf."},
-    {"id": "ur", "nom": "Booster ultra rare", "prix": 100, "boosters": 0, "ur": 1,
+    {"id": "ur", "nom": "Booster ultra rare", "prix": 200, "boosters": 0, "ur": 1,
      "texte": "Une carte ultra rare ou mieux est garantie."},
 ]
 
@@ -153,6 +159,7 @@ def etat_initial(maintenant=0):
     # progres    : avancement (de 0 à 1) du prochain booster gratuit ; horloge : dernier instant (en ms) calculé
     # achetes    : boosters achetés ou gagnés ; achetes_ur : boosters ultra rare garantie
     # multi      : multiplicateur en cours {"facteur": 2, "fin": instant en ms}, ou None
+    # multis     : multiplicateurs mis de côté {"2": n, "3": n, "5": n} ; jokers : jokers fantômes en réserve
     # roue_jour  : le jour (texte) où la roue a été tournée pour la dernière fois
     # codes_utilises : les codes déjà utilisés
     # stat_boosters, stat_points, stat_attendu : boosters ouverts (hors tests/admin), points tirés, points qu'on en attendait en moyenne ("chance")
@@ -162,7 +169,7 @@ def etat_initial(maintenant=0):
     return {
         "collection": {}, "finitions": {}, "monnaie": 0, "boosters_ouverts": 0, "sans_rare": 0,
         "stock": BOOSTERS_DEPART, "horloge": int(maintenant), "progres": 0.0, "achetes": 0, "achetes_ur": 0,
-        "multi": None, "roue_jour": "", "codes_utilises": [],
+        "multi": None, "multis": {}, "jokers": 0, "roue_jour": "", "codes_utilises": [],
         "stat_boosters": 0, "stat_points": 0, "stat_attendu": 0.0, "vitrine": [],
         "inv": {},
     }
@@ -284,24 +291,63 @@ def acheter(etat, offre_id, maintenant):
 def _donner_multi(etat, facteur, maintenant):
     duree = MULTI_DUREE_SECONDES * 1000
     m = etat.get("multi")
-    if m and m["fin"] > maintenant and facteur < m["facteur"]:
+    if m and m["fin"] > maintenant and facteur <= m["facteur"]:
         m["fin"] += duree  # un multiplicateur plus fort est déjà en cours : on le prolonge
     else:
         etat["multi"] = {"facteur": facteur, "fin": int(maintenant) + duree}
 
 
-def tourner_roue(etat, jour, maintenant):
-    """Un tour de roue par jour. Renvoie (erreur ou None, récompense ou None)."""
-    synchroniser(etat, maintenant)  # on met le minuteur à jour avant de changer sa vitesse
-    if etat["roue_jour"] == jour:
+def tourner_roue(etat, jour, maintenant, payant=False):
+    """Un tour de roue. Le premier tour du jour est gratuit (remis à zéro à minuit) ; avec payant=True on paie
+    PRIX_ROUE pièces pour un tour de plus, autant de fois qu'on veut. Renvoie (erreur ou None, récompense ou None)."""
+    synchroniser(etat, maintenant)
+    if payant:
+        if etat["monnaie"] < PRIX_ROUE:
+            return "Tu n'as pas assez de pièces.", None
+    elif etat["roue_jour"] == jour:
         return "Tu as déjà tourné la roue aujourd'hui. Reviens après minuit.", None
     gain = random.choices(ROUE, weights=[g["poids"] for g in ROUE])[0]
-    etat["roue_jour"] = jour
+    if payant:
+        etat["monnaie"] -= PRIX_ROUE
+    else:
+        etat["roue_jour"] = jour
     etat["monnaie"] += gain.get("pieces", 0)
     etat["achetes"] += gain.get("boosters", 0)
-    if gain.get("multi"):
-        _donner_multi(etat, gain["multi"], maintenant)
+    if gain.get("multi"):   # mis de côté : on l'active quand on veut
+        multis = etat.setdefault("multis", {})
+        multis[str(gain["multi"])] = multis.get(str(gain["multi"]), 0) + 1
+    if gain.get("joker"):
+        etat["jokers"] = etat.get("jokers", 0) + gain["joker"]
     return None, gain
+
+
+def activer_multi(etat, facteur, maintenant):
+    """Active un multiplicateur mis de côté. Renvoie None si c'est réussi, sinon le message d'erreur."""
+    synchroniser(etat, maintenant)   # on met le minuteur à jour avant de changer sa vitesse
+    multis = etat.setdefault("multis", {})
+    cle = str(facteur)
+    if multis.get(cle, 0) <= 0:
+        return "Tu n'as pas ce multiplicateur."
+    multis[cle] -= 1
+    _donner_multi(etat, int(facteur), maintenant)
+    return None
+
+
+def utiliser_joker(etat, cartes, carte_id):
+    """Dépense un joker fantôme : ajoute un exemplaire à une carte fantôme qui n'est pas encore entièrement révélée."""
+    c = _carte(cartes, carte_id)
+    cle = str(carte_id)
+    if not c.get("fantome"):
+        raise ValueError("Un joker ne marche que sur une carte fantôme.")
+    if etat.get("jokers", 0) <= 0:
+        raise ValueError("Tu n'as pas de joker fantôme.")
+    if fantome_revelee(etat, c):
+        raise ValueError("Cette carte fantôme est déjà entièrement révélée.")
+    inv = _inv(etat, c)
+    etat["jokers"] -= 1
+    etat["collection"][cle] = etat["collection"].get(cle, 0) + 1
+    inv["normale"] += 1
+    return etat["collection"][cle]
 
 
 def utiliser_code(etat, code, recompense, maintenant):
@@ -553,7 +599,7 @@ def tirer_booster(cartes, etat, mode="normal"):
     - "nouvelle" : True si le joueur ne possédait pas encore cette carte
     - "nouvelle_finition" : True si la carte est déjà possédée mais pas dans cette finition
     - "doublon" : True si l'exemplaire est un doublon (un exemplaire en plus, qu'on peut vendre)
-    - "valeur" : pièces qu'on aurait en vendant ce doublon ; "pieces" vaut toujours 0 (rien n'est vendu tout seul)
+    - "valeur" : pièces qu'on aurait en vendant ce doublon ; "pieces" : pièces reçues tout de suite pour ce doublon
     - "revelation" : pour une carte fantôme qui se révèle : {"avant": k, "apres": k+1, "requis": n}
     """
     etat.setdefault("finitions", {})
@@ -601,7 +647,8 @@ def tirer_booster(cartes, etat, mode="normal"):
         else:
             doublon = avant >= requis
         resultat.append({**c, "finition": fin, "nouvelle": nouvelle, "nouvelle_finition": nouvelle_fin,
-                         "doublon": doublon, "valeur": valeur_vente(c["rarete"], fin) if doublon else 0, "pieces": 0, **extra})
+                         "doublon": doublon, "valeur": valeur_vente(c["rarete"], fin) if doublon else 0,
+                         "pieces": valeur_vente(c["rarete"], fin) if doublon and mode != "libre" and mode != "libre_ur" else 0, **extra})
         deja.add(cle)
         copies[cle] = avant + 1
         if fin != "normale":
@@ -613,6 +660,7 @@ def tirer_booster(cartes, etat, mode="normal"):
     else:
         etat["sans_rare"] += 1
     etat["boosters_ouverts"] = etat.get("boosters_ouverts", 0) + 1
+    etat["monnaie"] += sum(c["pieces"] for c in resultat)   # les doublons rapportent des pièces tout de suite
     if mode in ("normal", "achete", "ur"):  # les boosters libres (admin) ne comptent pas pour la "chance"
         etat["stat_boosters"] = etat.get("stat_boosters", 0) + 1
         etat["stat_attendu"] = etat.get("stat_attendu", 0.0) + points_attendus(cartes, mode)
@@ -657,6 +705,7 @@ def reglages_web():
         "depart": BOOSTERS_DEPART,
         "boutique": BOUTIQUE,
         "roue": ROUE,
+        "prix_roue": PRIX_ROUE,
         "multi_duree_ms": MULTI_DUREE_SECONDES * 1000,
         "admin": ADMIN_PSEUDO,
     }, ensure_ascii=False)
@@ -749,9 +798,25 @@ def attente_web(etat_json, maintenant):
     return json.dumps(attente(json.loads(etat_json), maintenant))
 
 
-def tourner_roue_web(etat_json, jour, maintenant):
+def activer_multi_web(etat_json, facteur, maintenant):
     etat = json.loads(etat_json)
-    erreur, gain = tourner_roue(etat, jour, maintenant)
+    erreur = activer_multi(etat, int(facteur), maintenant)
+    return json.dumps({"erreur": erreur, "etat": etat}, ensure_ascii=False)
+
+
+def joker_web(etat_json, cartes_json, carte_id):
+    etat = json.loads(etat_json)
+    try:
+        utiliser_joker(etat, json.loads(cartes_json), int(carte_id))
+        erreur = None
+    except ValueError as e:
+        erreur = str(e)
+    return json.dumps({"erreur": erreur, "etat": etat}, ensure_ascii=False)
+
+
+def tourner_roue_web(etat_json, jour, maintenant, payant=False):
+    etat = json.loads(etat_json)
+    erreur, gain = tourner_roue(etat, jour, maintenant, bool(payant))
     return json.dumps({"erreur": erreur, "etat": etat, "gain": gain}, ensure_ascii=False)
 
 

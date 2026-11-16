@@ -475,6 +475,12 @@ button.carte-fixe { cursor: pointer; }
 #roue { display: block; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 5px rgba(255, 255, 255, .14), 0 22px 40px -18px rgba(0, 0, 0, .9);
   transition: transform 5.4s cubic-bezier(.1, .72, .12, 1); }
 #roue text { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 800; letter-spacing: -0.01em; }
+.bonus { margin-top: 18px; }
+.bonus h3 { margin: 0 0 4px; font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+.bonus-liste { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.bonus-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border: 1px solid var(--bord, rgba(255,255,255,.14)); border-radius: 14px; background: rgba(255,255,255,.04); }
+.bonus-item b { font-size: 17px; }
+.bonus-item span { color: var(--doux); font-size: 13.5px; }
 .roue-texte { flex: 1 1 260px; max-width: 400px; }
 .roue-texte h3 { margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
 .roue-texte p { margin: 0 0 14px; color: var(--doux); font-size: 14.5px; }
@@ -674,11 +680,18 @@ footer p { margin: 0; }
         </div>
         <div class="roue-texte">
           <h3>Roue de la chance</h3>
-          <p>Un tour par jour, remis à zéro à minuit. Pièces, booster, multiplicateur… ou rien du tout.</p>
+          <p id="roue-desc">Un tour gratuit par jour, remis à zéro à minuit. Ensuite, autant de tours que tu veux pour quelques pièces. Pièces, booster, multiplicateur, joker fantôme… ou rien du tout.</p>
           <button type="button" class="btn" id="roue-btn">Tourner la roue</button>
           <p class="sous" id="roue-compte" style="margin-top:12px"></p>
           <div class="roue-resultat" id="roue-resultat" aria-live="polite"></div>
         </div>
+      </div>
+
+      <div class="panneau bonus" id="bonus-zone" hidden>
+        <h3>Mes bonus</h3>
+        <p class="sous">Les multiplicateurs et les jokers gagnés à la roue s'empilent : utilise-les quand tu veux.</p>
+        <div class="bonus-liste" id="bonus-liste"></div>
+        <p class="message" id="bonus-msg" aria-live="polite"></p>
       </div>
 
       <div class="boutique" id="boutique"></div>
@@ -1482,7 +1495,7 @@ function majMessage() {
     else if (c.revelation) {
       const pct = Math.round(pRevele(c.revelation.apres, c.revelation.requis) * 100);
       m.textContent = debut + `Carte fantôme : ${c.revelation.apres} / ${c.revelation.requis} exemplaires, ${pct} % révélée` + (c.revelation.apres >= c.revelation.requis ? " ! Elle est complète." : ".");
-    } else if (c.doublon) m.textContent = debut + "Un doublon : il va dans ton stock, à vendre ou à utiliser pour améliorer une carte.";
+    } else if (c.doublon) m.textContent = debut + `Un doublon : +${pluriel(c.pieces, "pièce", "pièces")}. Il reste aussi dans ton stock : tu peux le vendre au même prix ou l'utiliser pour améliorer une carte.`;
     else m.textContent = debut;
   } else if (phase === "fini") {
     const n = tirage.filter((c) => c.nouvelle).length;
@@ -1491,7 +1504,7 @@ function majMessage() {
     else if (tirage.some((c) => c.finition === "arc-en-ciel")) t += " Une carte arc-en-ciel !";
     else if (tirage.some((c) => c.finition === "brillante")) t += " Une carte brillante !";
     const dbl = tirage.filter((c) => c.doublon).length;
-    if (dbl > 0) t += ` ${pluriel(dbl, "doublon", "doublons")} à vendre ou à utiliser pour améliorer tes cartes (onglet Collection).`;
+    if (dbl > 0) t += ` ${pluriel(dbl, "doublon", "doublons")} : +${pluriel(tirage.reduce((s, c) => s + (c.pieces || 0), 0), "pièce", "pièces")}, et ils restent en stock pour les vendre ou améliorer tes cartes (onglet Collection).`;
     if (dernierTest) t += " Mode test : rien n'est enregistré.";
     if (garantieDeclenchee) t += ` La garantie s'est déclenchée : une carte ${REGL.pitie_rarete} ou mieux t'était réservée.`;
     m.textContent = t;
@@ -1795,7 +1808,7 @@ function acheter(id) {
 }
 
 /* ---------- roue de la chance ---------- */
-const COULEURS_ROUE = { p10: "#d9a93a", p25: "#f2c14e", p50: "#ffd978", b1: "#4c9bff", x2: "#a85cff", x3: "#ff5fa8", x5: "#ff4458", rien: "#2a3948" };
+const COULEURS_ROUE = { p10: "#d9a93a", p25: "#f2c14e", p50: "#ffd978", b1: "#4c9bff", x2: "#a85cff", x3: "#ff5fa8", x5: "#ff4458", joker: "#7be0ff", rien: "#2a3948" };
 function dessinerRoue() {
   const NS = "http://www.w3.org/2000/svg";
   const svg = $("#roue");
@@ -1819,7 +1832,7 @@ function dessinerRoue() {
     t.setAttribute("text-anchor", "end");
     t.setAttribute("dominant-baseline", "central");
     t.setAttribute("font-size", g.poids >= 20 ? "12" : "10");
-    t.setAttribute("fill", g.id === "rien" ? "#8c9db0" : g.id.startsWith("p") ? "#1d1503" : "#ffffff");
+    t.setAttribute("fill", g.id === "rien" ? "#8c9db0" : g.id === "joker" ? "#06222b" : g.id.startsWith("p") && g.id !== "p" ? "#1d1503" : "#ffffff");
     t.textContent = g.court;
     svg.append(chemin, t);
     a0 = a1;
@@ -1835,14 +1848,52 @@ function dessinerRoue() {
 function majRoue() {
   if (!etat) return;
   const fait = etat.roue_jour === jourLocal();
-  $("#roue-btn").disabled = fait || roueEnCours;
-  if (!roueEnCours) $("#roue-compte").textContent = fait ? `Ton tour du jour est utilisé. Prochain tour à minuit, dans ${dureeLongue(resteAvantMinuit())}.` : "Ton tour du jour est disponible !";
+  const solde = etat.monnaie - gainRestant;
+  const btn = $("#roue-btn");
+  btn.textContent = fait ? `Tourner encore · ${REGL.prix_roue} pièces` : "Tourner la roue";
+  btn.disabled = roueEnCours || (fait && solde < REGL.prix_roue);
+  if (!roueEnCours) $("#roue-compte").textContent = fait
+    ? `Ton tour gratuit du jour est utilisé (il revient à minuit, dans ${dureeLongue(resteAvantMinuit())}). Tu peux encore tourner pour ${REGL.prix_roue} pièces.`
+    : "Ton tour gratuit du jour est disponible !";
+  majBonus();
+}
+
+function majBonus() {
+  const zone = $("#bonus-zone"), liste = $("#bonus-liste");
+  if (!zone || !etat) return;
+  const multis = etat.multis || {}, jokers = etat.jokers || 0;
+  const items = [];
+  for (const g of REGL.roue.filter((x) => x.multi)) {
+    const n = multis[String(g.multi)] || 0;
+    if (n <= 0) continue;
+    const it = el("div", "bonus-item");
+    it.append(el("b", "", `×${g.multi}`), el("span", "", `× ${n} · un booster gratuit toutes les ${dureeTxt(REGL.intervalle_ms / g.multi)} pendant ${Math.round(REGL.multi_duree_ms / 60000)} min`));
+    const b = el("button", "btn second", "Activer");
+    b.type = "button";
+    b.addEventListener("click", () => {
+      const r = JSON.parse(activerMultiPy(JSON.stringify(etat), g.multi, Date.now()));
+      if (r.erreur) { $("#bonus-msg").textContent = r.erreur; return; }
+      etat = r.etat; sauvegarder(); majStats(); majBonus();
+      $("#bonus-msg").textContent = `Multiplicateur ×${g.multi} activé !`;
+    });
+    it.append(b);
+    items.push(it);
+  }
+  if (jokers > 0) {
+    const it = el("div", "bonus-item");
+    it.append(el("b", "", "Joker"), el("span", "", `× ${jokers} · à utiliser depuis une carte fantôme (onglet Collection)`));
+    items.push(it);
+  }
+  zone.hidden = items.length === 0;
+  liste.replaceChildren(...items);
 }
 
 async function tournerRoue() {
-  if (roueEnCours || etat.roue_jour === jourLocal()) return;
+  if (roueEnCours) return;
+  const payant = etat.roue_jour === jourLocal();
+  if (payant && etat.monnaie - gainRestant < REGL.prix_roue) return;
   let r;
-  try { r = JSON.parse(roueurPy(JSON.stringify(etat), jourLocal(), Date.now())); }
+  try { r = JSON.parse(roueurPy(JSON.stringify(etat), jourLocal(), Date.now(), payant)); }
   catch (e) { console.error(e); $("#roue-resultat").textContent = "La roue a eu un souci."; return; }
   if (r.erreur) { $("#roue-resultat").textContent = r.erreur; return; }
   roueEnCours = true;
@@ -1865,7 +1916,8 @@ async function tournerRoue() {
   if (g.id === "rien") texte = "Rien cette fois… Reviens demain !";
   else if (g.pieces) texte = `Tu gagnes ${g.pieces} pièces !`;
   else if (g.boosters) texte = "Tu gagnes un booster !";
-  else texte = `Multiplicateur ×${g.multi} ! Un booster gratuit toutes les ${dureeTxt(REGL.intervalle_ms / g.multi)} pendant ${Math.round(REGL.multi_duree_ms / 60000)} minutes.`;
+  else if (g.joker) texte = "Joker fantôme ! Il est dans tes bonus : utilise-le depuis une carte fantôme (onglet Collection).";
+  else texte = `Multiplicateur ×${g.multi} ! Il est dans tes bonus : active-le quand tu veux (un booster gratuit toutes les ${dureeTxt(REGL.intervalle_ms / g.multi)} pendant ${Math.round(REGL.multi_duree_ms / 60000)} minutes).`;
   zone.append(texte);
   if (g.boosters) {
     zone.append(el("br"));
@@ -2184,7 +2236,23 @@ function actionsZoom(c) {
   z.replaceChildren();
   const fan = infoFantome(c);
   if (fan) {
+    const msgJ = el("p", "msg");
+    msgJ.setAttribute("aria-live", "polite");
     z.append(el("p", "", `Carte fantôme : ${fan.k} / ${fan.requis} exemplaires. Chaque exemplaire que tu tires révèle une part de l'image.`));
+    const jokers = etat.jokers || 0;
+    const bj = el("button", "btn", `Utiliser un joker fantôme (${jokers})`);
+    bj.type = "button"; bj.disabled = jokers <= 0;
+    bj.addEventListener("click", () => {
+      const res = JSON.parse(jokerPy(JSON.stringify(etat), CARTES_TXT, c.id));
+      etat = res.etat;
+      if (res.erreur) { msgJ.textContent = res.erreur; return; }
+      sauvegarder(); majStats(); majCollection(); majBonus(); rendreZoom();
+      $("#zoom-actions .msg").textContent = "Joker utilisé : un exemplaire de plus !";
+    });
+    const btnsJ = el("div", "btns");
+    btnsJ.append(bj);
+    z.append(btnsJ, msgJ);
+    if (jokers <= 0) msgJ.textContent = "Tu n'as pas de joker fantôme. Tu peux en gagner à la roue de la chance.";
     return;
   }
   const r = rang(c), stock = stockDe(c), actuelle = meilleureFinition(c);
@@ -2303,7 +2371,7 @@ function rendreInfos() {
       tableau(["Offre", "Prix", "Contenu"], offres)),
   );
   infos.children[1].append(
-    bloc("Vendre un doublon", "Un doublon est une carte que tu as déjà. Il reste en stock : tu peux le vendre (plus la carte est rare, plus elle rapporte, et les finitions rapportent un peu plus) ou l'utiliser pour améliorer une carte.",
+    bloc("Vendre un doublon", "Un doublon est une carte que tu as déjà. Quand tu le tires dans un booster, il te rapporte tout de suite des pièces (plus la carte est rare, plus elle rapporte, et les finitions rapportent un peu plus), sauf les exemplaires qui servent à révéler une carte fantôme. Il reste ensuite en stock : tu peux le revendre au même prix, ou l'utiliser pour améliorer une carte.",
       tableau(["Rareté", "Normale", "Brillante", "Arc-en-ciel"], valeurs)),
     bloc("Finitions", `Chaque carte tirée peut être brillante (${uneSur(REGL.chance_brillante)}) ou arc-en-ciel (${uneSur(REGL.chance_arc)}), quelle que soit sa rareté. ` +
       "La brillante a un reflet blanc qui balaie la carte. L'arc-en-ciel a un cadre et des reflets multicolores, d'autant plus marqués que la carte est rare."),
@@ -2316,7 +2384,7 @@ function rendreInfos() {
   if (nbFant) infos.append(bloc("Cartes fantômes", `Certaines cartes (${nbFant} dans le jeu) sont des fantômes : quand tu les tires, on ne voit presque rien. Chaque exemplaire révèle une part de l'image, jusqu'à ce que tu aies tous les exemplaires. Un fantôme est révélé plus vite si sa rareté est élevée.`,
     tableau(["Rareté", "Exemplaires pour tout révéler"], REGL.ordre.map((nom, r) => ({ r, cellules: [majuscule(nom), String(REGL.requis_fantome[r])] })))));
   const multis = REGL.roue.filter((g) => g.multi).map((g) => `×${g.multi} : un booster toutes les ${dureeTxt(REGL.intervalle_ms / g.multi)}`);
-  infos.append(bloc("Roue de la chance", `Un tour par jour, remis à zéro à minuit. Les multiplicateurs accélèrent tes boosters gratuits pendant ${Math.round(REGL.multi_duree_ms / 60000)} minutes (${multis.join(" ; ")}).`,
+  infos.append(bloc("Roue de la chance", `Un tour gratuit par jour (remis à zéro à minuit), puis autant de tours que tu veux pour ${REGL.prix_roue} pièces. Les multiplicateurs et les jokers fantômes gagnés sont mis de côté dans « Mes bonus » (onglet Boutique) : ils s'empilent et tu les utilises quand tu veux. Un joker fantôme ajoute un exemplaire à une carte fantôme (depuis la collection). Les multiplicateurs accélèrent tes boosters gratuits pendant ${Math.round(REGL.multi_duree_ms / 60000)} minutes (${multis.join(" ; ")}).`,
     tableau(["Récompense", "Chance"], REGL.roue.map((g) => ({ r: "", cellules: [g.texte, pourcent(g.poids / 100)] })))));
   if (REGL.pitie_apres) {
     infos.append(bloc("Garantie", `Si tu n'as pas eu de carte ${REGL.pitie_rarete} ou mieux pendant ${REGL.pitie_apres} boosters, le suivant en contient une.`));
@@ -2515,7 +2583,7 @@ function synchro(e, t) {  // temps qui passe + mise à niveau d'une ancienne sau
   const r = JSON.parse(synchroPy(JSON.stringify(e), t));
   return normaliserPy && CARTES_TXT ? JSON.parse(normaliserPy(JSON.stringify(r), CARTES_TXT)) : r;
 }
-let normaliserPy = null, ventePy = null, venteToutPy = null, ameliorerPy = null, massePy = null, profilPy = null, synchroPy = null, acheterPy = null, nouvelEtatPy = null, attentePy = null, roueurPy = null, codePy = null;
+let activerMultiPy = null, jokerPy = null, normaliserPy = null, ventePy = null, venteToutPy = null, ameliorerPy = null, massePy = null, profilPy = null, synchroPy = null, acheterPy = null, nouvelEtatPy = null, attentePy = null, roueurPy = null, codePy = null;
 let moteurPret = null;
 let modeConnexion = "connecter";
 let minuteurHorloge = null;
@@ -2534,6 +2602,8 @@ async function chargerMoteur() {
   nouvelEtatPy = g("nouvel_etat_web");
   attentePy = g("attente_web");
   roueurPy = g("tourner_roue_web");
+  activerMultiPy = g("activer_multi_web");
+  jokerPy = g("joker_web");
   codePy = g("utiliser_code_web");
   profilPy = g("profil_web");
   massePy = g("ouvrir_masse_web");
